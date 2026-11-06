@@ -1,0 +1,31 @@
+{
+  "name": "@ghartak/database",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Drizzle schema, PostgreSQL client, and version-controlled migrations.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node --env-file=../../.env dist/seed.js",
+    "db:verify": "node --env-file=../../.env dist/verify.js"
+  },
+  "dependencies": {
+    "@ghartak/contracts": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "drizzle-kit": "0.31.11",
+    "typescript": "catalog:"
+  }
+}

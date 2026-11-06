@@ -1,0 +1,32 @@
+{
+  "name": "@ghartak/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Modular monolith API.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --env-file=../../.env --test-concurrency=1 --test dist-test/test/catalogue.test.js dist-test/test/admin.test.js dist-test/test/checkout.test.js dist-test/test/admin-orders.test.js dist-test/test/order-status.test.js dist-test/test/image-upload.test.js dist-test/test/image-lifecycle.test.js",
+    "dev": "node --env-file=../../.env --watch dist/server.js",
+    "start": "node --env-file=../../.env dist/server.js",
+    "admin:create": "node --env-file=../../.env dist/cli/create-admin.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1160.0",
+    "@fastify/multipart": "^10.1.6",
+    "@ghartak/config": "workspace:*",
+    "@ghartak/contracts": "workspace:*",
+    "@ghartak/database": "workspace:*",
+    "@node-rs/argon2": "^2.2.2",
+    "drizzle-orm": "0.45.4",
+    "fastify": "5.12.7",
+    "ioredis": "5.11.1",
+    "pino": "10.4.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

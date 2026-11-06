@@ -1,0 +1,2 @@
+ALTER TABLE "product_images" DROP CONSTRAINT "product_images_object_key_format";--> statement-breakpoint
+ALTER TABLE "product_images" ADD CONSTRAINT "product_images_object_key_format" CHECK (char_length("product_images"."object_key") between 1 and 512 and "product_images"."object_key" ~ '^[A-Za-z0-9][A-Za-z0-9/._-]*$');
