@@ -38,7 +38,7 @@ pnpm infra:up
 # 4. Build the API and the packages it uses
 pnpm --filter '@ghartak/api...' run build
 
-# 5. Create the tables and load sample data
+# 5. Create the tables and the store, zone, and starter categories
 pnpm db:migrate
 pnpm db:seed
 ```
@@ -113,7 +113,7 @@ Tests use the database and Redis, so run `pnpm infra:up` first.
 | `pnpm --filter @ghartak/api test` | Run API tests |
 | `pnpm --filter ./apps/admin test` | Run admin tests |
 | `pnpm --filter ./apps/mobile test` | Run customer app tests |
-| `pnpm db:verify` | Check the database schema and seed data |
+| `pnpm db:verify` | Check the database schema and constraints |
 | `pnpm infra:ps` | Show container status |
 | `pnpm infra:logs` | Follow container logs |
 | `pnpm infra:down` | Stop containers and keep their data |
@@ -124,9 +124,7 @@ Tests use the database and Redis, so run `pnpm infra:up` first.
 | --- | --- | --- |
 | `Cannot connect to the Docker daemon` | Docker Desktop isn't running | Open Docker Desktop, then run `pnpm infra:up` again |
 | `Route not found` from `/health` | API routes are under `/api/v1` | Use `/api/v1/health` |
-| `/api/v1/products` returns an empty list | No products are active | Activate products in the admin dashboard |
-| `pnpm db:seed` fails on `product_images` | The seed is meant for an empty database and clashes with images changed since it last ran | Keep the existing data and skip the seed |
-| `pnpm db:verify` reports `expected 6 catalogue images` or a price and stock failure | The catalogue no longer matches the seed data | Expected once the catalogue has been edited |
+| `/api/v1/products` returns an empty list | The seed adds no products, or none are published | Add and publish products in the admin dashboard |
 | Admin login fails or its requests are blocked | The dashboard and API are using different hostnames, or the origin isn't trusted | Use `localhost` for both, and check `ADMIN_TRUSTED_ORIGINS` |
 | `Unable to resolve module react-native-web/dist/index` | The customer app doesn't include `react-native-web`, so `expo start --web` can't bundle | Use a simulator, emulator, or phone |
 | Customer app shows photo placeholders | `EXPO_PUBLIC_IMAGE_BASE_URL` isn't set | Set it to your image host, or ignore it during development |

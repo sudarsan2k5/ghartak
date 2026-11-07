@@ -18,6 +18,7 @@ import {
   stores,
   type Database,
 } from "@ghartak/database";
+import { insertSampleCatalogue, removeSampleCatalogue } from "@ghartak/database/sample-catalogue";
 import { eq, like } from "drizzle-orm";
 import type { Redis } from "ioredis";
 import { buildApp } from "../src/app.js";
@@ -55,6 +56,7 @@ describe("customer catalogue", () => {
     }
     db = openDatabase(connectionString);
     await removeFixtures(db);
+    await insertSampleCatalogue(db);
     const [store] = await db.select({ id: stores.id }).from(stores).limit(1);
     if (!store) {
       throw new Error("fulfilment location is missing");
@@ -70,6 +72,7 @@ describe("customer catalogue", () => {
 
   after(async () => {
     await removeFixtures(db);
+    await removeSampleCatalogue(db);
     await app.close();
     await closeDatabase();
   });
@@ -105,7 +108,7 @@ describe("customer catalogue", () => {
 
   it("returns product details with images and attributes", async () => {
     const listed = productListResponseSchema.parse(
-      await getJson(app, "/api/v1/products?search=DAL-TOOR-1KG&limit=10"),
+      await getJson(app, "/api/v1/products?search=SAMPLE-DAL-TOOR&limit=10"),
     );
     const dal = listed.products.find((product) => product.name === "Toor Dal");
     assert.ok(dal);
@@ -147,7 +150,7 @@ describe("customer catalogue", () => {
       byBrand.products.map((product) => product.id),
       [fixture.brandId],
     );
-    const bySku = productListResponseSchema.parse(await getJson(app, "/api/v1/products?search=atta-5kg"));
+    const bySku = productListResponseSchema.parse(await getJson(app, "/api/v1/products?search=sample-atta"));
     assert.ok(bySku.products.some((product) => product.name === "Wheat Atta"));
     const blank = productListResponseSchema.parse(await getJson(app, "/api/v1/products?search=%20%20&limit=50"));
     assert.equal(blank.pagination.total, 9);

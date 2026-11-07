@@ -8,6 +8,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./sample-catalogue": {
+      "types": "./src/sample-catalogue.ts",
+      "import": "./dist/sample-catalogue.js"
     }
   },
   "scripts": {

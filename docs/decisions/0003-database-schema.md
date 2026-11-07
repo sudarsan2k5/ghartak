@@ -21,4 +21,4 @@ The marketplace needs a durable schema before product, cart, checkout, or paymen
 
 ## Consequences
 
-Generate SQL with `pnpm db:generate`, review it, then apply it with `pnpm db:migrate`. `pnpm db:seed` inserts the demo village data and does nothing on conflict. `pnpm db:verify` checks constraints against that database.
+Generate SQL with `pnpm db:generate`, review it, then apply it with `pnpm db:migrate`. `pnpm db:seed` inserts the service zone, fulfilment store, and starter categories, and does nothing on conflict. It adds no products. `pnpm db:verify` checks constraints against that database, using sample products it inserts for the run and removes afterwards.

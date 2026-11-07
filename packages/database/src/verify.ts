@@ -19,7 +19,7 @@ import {
   storeStatusValues,
   userRoleValues,
 } from "@ghartak/contracts";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import {
   assertImageCleanupTransition,
   canTransitionImageCleanupStatus,
@@ -29,6 +29,7 @@ import {
   canTransitionOrderStatus,
 } from "./order-status.js";
 import { closeDatabase, openDatabase, withTransaction, type Database } from "./client.js";
+import { insertSampleCatalogue, removeSampleCatalogue, sampleProductIds } from "./sample-catalogue.js";
 import { seedIds } from "./seed.js";
 import {
   accountStatusEnum,
@@ -118,6 +119,7 @@ async function main(): Promise<void> {
   const results: CheckResult[] = [];
 
   try {
+    await insertSampleCatalogue(db);
     await check(results, "tables exist", () => assertTables(db));
     await check(results, "foreign keys and delete actions", () => assertForeignKeys(db));
     await check(results, "admin authentication columns", () => assertAdminAuth(db));
@@ -189,9 +191,9 @@ async function main(): Promise<void> {
         await tx.insert(imageCleanup).values({
           operation: "upload",
           status: "pending_upload",
-          productId: seedIds.dal,
+          productId: sampleProductIds.dal,
           imageId: randomUUID(),
-          objectKey: `catalog/${seedIds.dal}/${randomUUID()}.jpg`,
+          objectKey: `catalog/${sampleProductIds.dal}/${randomUUID()}.jpg`,
           contentType: "image/jpeg",
           byteLength: 12,
         });
@@ -238,7 +240,7 @@ async function main(): Promise<void> {
         () =>
           db.insert(storeProducts).values({
             storeId: seedIds.fulfilment,
-            productId: seedIds.dal,
+            productId: sampleProductIds.dal,
             pricePaise: 1,
             stockQuantity: 1,
             availability: "available",
@@ -390,19 +392,19 @@ async function main(): Promise<void> {
         await tx.insert(orderItems).values({
           id: itemId,
           orderId,
-          productId: seedIds.dal,
+          productId: sampleProductIds.dal,
           productName: "Toor Dal",
-          sku: "DAL-TOOR-1KG",
+          sku: "SAMPLE-DAL-TOOR",
           quantity: 2,
           unitPricePaise: 12000,
           lineTotalPaise: 24000,
         });
-        await tx.update(products).set({ name: "Renamed Dal" }).where(eq(products.id, seedIds.dal));
+        await tx.update(products).set({ name: "Renamed Dal" }).where(eq(products.id, sampleProductIds.dal));
         const [item] = await tx
           .select({ productName: orderItems.productName, sku: orderItems.sku, quantity: orderItems.quantity })
           .from(orderItems)
           .where(eq(orderItems.id, itemId));
-        if (!item || item.productName !== "Toor Dal" || item.sku !== "DAL-TOOR-1KG" || item.quantity !== 2) {
+        if (!item || item.productName !== "Toor Dal" || item.sku !== "SAMPLE-DAL-TOOR" || item.quantity !== 2) {
           throw new Error("order item snapshot changed");
         }
       }),
@@ -494,7 +496,7 @@ async function main(): Promise<void> {
       expectSqlState(
         () =>
           db.insert(productImages).values({
-            productId: seedIds.dal,
+            productId: sampleProductIds.dal,
             objectKey: "catalog/toor-dal/extra-primary.jpg",
             deliveryPath: "/catalog/toor-dal/extra-primary.jpg",
             position: 9,
@@ -507,7 +509,7 @@ async function main(): Promise<void> {
       expectSqlState(
         () =>
           db.insert(productImages).values({
-            productId: seedIds.dal,
+            productId: sampleProductIds.dal,
             objectKey: "catalog/toor-dal/duplicate-position.jpg",
             deliveryPath: "/catalog/toor-dal/duplicate-position.jpg",
             position: 0,
@@ -519,7 +521,7 @@ async function main(): Promise<void> {
     await check(results, "a second product image can be stored", () =>
       rollbackAfter(db, async (tx) => {
         await tx.insert(productImages).values({
-          productId: seedIds.atta,
+          productId: sampleProductIds.atta,
           objectKey: "catalog/wheat-atta/detail.jpg",
           deliveryPath: "/catalog/wheat-atta/detail.jpg",
           altText: "Wheat atta detail",
@@ -621,9 +623,9 @@ async function main(): Promise<void> {
         await tx.insert(orders).values({ ...orderRow(null, orderNumber()), id: orderId });
         await tx.insert(orderItems).values({
           orderId,
-          productId: seedIds.dal,
+          productId: sampleProductIds.dal,
           productName: "Toor Dal",
-          sku: "DAL-TOOR-1KG",
+          sku: "SAMPLE-DAL-TOOR",
           quantity: 1,
           unitPricePaise: 12000,
           lineTotalPaise: 12000,
@@ -653,7 +655,7 @@ async function main(): Promise<void> {
       expectSqlState(
         () =>
           db.insert(productImages).values({
-            productId: seedIds.onion,
+            productId: sampleProductIds.onion,
             objectKey: "catalog/bad key.jpg",
             deliveryPath: "/catalog/bad-key.jpg",
             position: 1,
@@ -663,6 +665,7 @@ async function main(): Promise<void> {
       ),
     );
   } finally {
+    await removeSampleCatalogue(db);
     await closeDatabase();
   }
 
@@ -839,13 +842,14 @@ async function assertCentralInventory(db: Database): Promise<void> {
       pricePaise: storeProducts.pricePaise,
       stockQuantity: storeProducts.stockQuantity,
     })
-    .from(storeProducts);
+    .from(storeProducts)
+    .where(inArray(storeProducts.productId, Object.values(sampleProductIds)));
   const expected = new Map<string, { pricePaise: number; stockQuantity: number }>([
-    [seedIds.dal, { pricePaise: 12000, stockQuantity: 40 }],
-    [seedIds.atta, { pricePaise: 25000, stockQuantity: 25 }],
-    [seedIds.milk, { pricePaise: 5600, stockQuantity: 60 }],
-    [seedIds.tomato, { pricePaise: 4000, stockQuantity: 30 }],
-    [seedIds.onion, { pricePaise: 3000, stockQuantity: 50 }],
+    [sampleProductIds.dal, { pricePaise: 12000, stockQuantity: 40 }],
+    [sampleProductIds.atta, { pricePaise: 25000, stockQuantity: 25 }],
+    [sampleProductIds.milk, { pricePaise: 5600, stockQuantity: 60 }],
+    [sampleProductIds.tomato, { pricePaise: 4000, stockQuantity: 30 }],
+    [sampleProductIds.onion, { pricePaise: 3000, stockQuantity: 50 }],
   ]);
   if (listings.length !== expected.size) {
     throw new Error(`expected ${expected.size} central listings, found ${listings.length}`);
@@ -900,7 +904,8 @@ async function assertCatalogueImages(db: Database): Promise<void> {
       position: productImages.position,
       isPrimary: productImages.isPrimary,
     })
-    .from(productImages);
+    .from(productImages)
+    .where(inArray(productImages.productId, Object.values(sampleProductIds)));
   if (images.length !== 6) {
     throw new Error(`expected 6 catalogue images, found ${images.length}`);
   }
@@ -919,7 +924,7 @@ async function assertCatalogueImages(db: Database): Promise<void> {
       throw new Error("a product does not have exactly one primary image");
     }
   }
-  const dalImages = images.filter((image) => image.productId === seedIds.dal);
+  const dalImages = images.filter((image) => image.productId === sampleProductIds.dal);
   if (dalImages.length !== 2) {
     throw new Error("the demo product does not have multiple images");
   }
@@ -961,9 +966,9 @@ async function assertCommittedOrder(db: Database): Promise<void> {
       await tx.insert(orders).values({ ...orderRow(userId, number), id: orderId });
       await tx.insert(orderItems).values({
         orderId,
-        productId: seedIds.dal,
+        productId: sampleProductIds.dal,
         productName: "Toor Dal",
-        sku: "DAL-TOOR-1KG",
+        sku: "SAMPLE-DAL-TOOR",
         quantity: 1,
         unitPricePaise: 12000,
         lineTotalPaise: 12000,
