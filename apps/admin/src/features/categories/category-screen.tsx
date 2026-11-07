@@ -1,8 +1,11 @@
 "use client";
 
 import { adminCategorySchema } from "@ghartak/contracts";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import type { z } from "zod";
+import { ImagePicker } from "@/components/ui/image-picker";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { controlClassName, describedBy, Field } from "@/components/ui/field";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -17,11 +20,14 @@ import {
   validateUpdate,
   type CategoryDraft,
 } from "@/lib/categories/form";
-import { createCategory, deleteCategory, updateCategory } from "@/lib/categories/requests";
+import { createCategory, deleteCategory, removeCategoryImage, reorderCategories, updateCategory, uploadCategoryImage } from "@/lib/categories/requests";
+import { readImageBaseUrl, resolveProductImage } from "@/lib/products/images";
 import { fetchCategories } from "@/lib/products/requests";
 import { formatCount } from "@/lib/utils/format";
 
 type Category = z.infer<typeof adminCategorySchema>;
+
+export type { Category };
 
 export function CategoryScreen() {
   const { client } = useSession();
@@ -35,6 +41,8 @@ export function CategoryScreen() {
   const [removeTarget, setRemoveTarget] = useState<Category | null>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const imageBase = readImageBaseUrl();
 
   useEffect(() => {
     if (!client) {
@@ -66,6 +74,31 @@ export function CategoryScreen() {
   function refresh() {
     setView(categoryListView({ phase: "loading" }));
     setAttempt((current) => current + 1);
+  }
+
+  async function move(category: Category, offset: -1 | 1) {
+    if (!client || reordering) {
+      return;
+    }
+    const index = categories.findIndex((row) => row.id === category.id);
+    const target = categories[index + offset];
+    if (!target) {
+      return;
+    }
+    const next = [...categories];
+    next[index] = target;
+    next[index + offset] = category;
+    setReordering(true);
+    setCategories(next);
+    const result = await reorderCategories(client, next.map((row) => row.id));
+    setReordering(false);
+    if (!result.ok) {
+      if (await redirect(result)) {
+        return;
+      }
+      setNotice(result.message);
+      refresh();
+    }
   }
 
   async function confirmDelete() {
@@ -118,10 +151,10 @@ export function CategoryScreen() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <p className="max-w-2xl text-sm leading-6 text-secondary">
-          Categories are shared by the central catalogue. The list includes inactive categories. A category with products can be deactivated, and its products stay where they are.
+          Every category customers can browse. Open a category to manage its products. The order here is the order customers see.
         </p>
         <button type="button" className="inline-flex h-11 items-center justify-center rounded-xl bg-lime px-4 font-display text-sm font-semibold text-ink" onClick={() => setEditor("new")}>
-          Add a category
+          Add Category
         </button>
       </div>
       <form
@@ -132,7 +165,7 @@ export function CategoryScreen() {
           <label className="text-sm font-medium" htmlFor="category-search">
             Search
           </label>
-          <input id="category-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, slug, or description" className={`${controlClassName} mt-2`} />
+          <input id="category-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Category name" className={`${controlClassName} mt-2`} />
         </div>
         <div>
           <label className="text-sm font-medium" htmlFor="category-status">
@@ -171,72 +204,54 @@ export function CategoryScreen() {
       {shown.kind === "empty" ? (
         <section className="rounded-2xl border border-dashed border-line bg-white p-8 text-center">
           <h2 className="font-display text-lg font-extrabold">{categories.length === 0 ? "No categories yet" : "No categories match"}</h2>
-          <p className="mt-2 text-sm text-secondary">{categories.length === 0 ? "Add a category for the central catalogue." : "Try another name, slug, or status."}</p>
+          <p className="mt-2 text-sm text-secondary">{categories.length === 0 ? "Add a category for the central catalogue." : "Try another name or status."}</p>
         </section>
       ) : null}
       {shown.kind === "ready" ? (
-        <>
-          <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-card md:block">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="border-b border-line text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Slug</th>
-                  <th className="px-4 py-3 font-medium">Description</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Products</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((category) => (
-                  <tr key={category.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3 font-medium">{category.name}</td>
-                    <td className="px-4 py-3">{category.slug}</td>
-                    <td className="px-4 py-3 text-secondary">{category.description ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge value={category.isActive ? "active" : "inactive"} />
-                    </td>
-                    <td className="px-4 py-3">{formatCount(category.productCount)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button type="button" className="rounded-xl bg-lime px-3 py-2 font-display text-sm font-semibold text-ink" onClick={() => setEditor(category)}>
-                          Edit
-                        </button>
-                        <button type="button" className="rounded-xl border border-line px-3 py-2 text-sm" onClick={() => setRemoveTarget(category)}>
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <ul className="space-y-3 md:hidden">
-            {visible.map((category) => (
-              <li key={category.id} className="rounded-2xl border border-line bg-white p-4 shadow-card">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">{category.name}</p>
-                    <p className="text-sm text-muted">{category.slug}</p>
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {visible.map((category) => {
+            const imageUrl = resolveProductImage(category.imageDeliveryPath, imageBase);
+            const canMove = !query.trim() && !status;
+            const position = categories.findIndex((row) => row.id === category.id);
+            return (
+              <li key={category.id} className="flex gap-4 rounded-2xl border border-line bg-white p-4 shadow-card">
+                <Link href={`/categories/${category.id}`} aria-label={`Manage ${category.name}`} className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-wash">
+                  {imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl} alt={category.name} className="size-full object-cover" />
+                  ) : (
+                    <span className="font-display text-2xl font-extrabold text-muted">{category.name.slice(0, 1).toUpperCase()}</span>
+                  )}
+                </Link>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link href={`/categories/${category.id}`} className="break-words font-medium hover:underline">{category.name}</Link>
+                    <StatusBadge value={category.isActive ? "active" : "inactive"} />
                   </div>
-                  <StatusBadge value={category.isActive ? "active" : "inactive"} />
-                </div>
-                <p className="mt-3 text-sm text-secondary">{category.description ?? "No description."}</p>
-                <p className="mt-3 text-sm">{formatCount(category.productCount)} products</p>
-                <div className="mt-4 flex gap-2">
-                  <button type="button" className="h-11 flex-1 rounded-xl bg-lime font-display text-sm font-semibold text-ink" onClick={() => setEditor(category)}>
-                    Edit
-                  </button>
-                  <button type="button" className="h-11 flex-1 rounded-xl border border-line text-sm" onClick={() => setRemoveTarget(category)}>
-                    Delete
-                  </button>
+                  <p className="mt-1 text-sm text-muted">{formatCount(category.productCount)} {category.productCount === 1 ? "product" : "products"}</p>
+                  {canMove ? (
+                    <div className="mt-2 flex gap-1">
+                      <button type="button" aria-label={`Move ${category.name} earlier`} disabled={reordering || position === 0} className="grid size-8 place-items-center rounded-lg border border-line disabled:opacity-40" onClick={() => void move(category, -1)}>
+                        <ArrowUp size={14} />
+                      </button>
+                      <button type="button" aria-label={`Move ${category.name} later`} disabled={reordering || position === categories.length - 1} className="grid size-8 place-items-center rounded-lg border border-line disabled:opacity-40" onClick={() => void move(category, 1)}>
+                        <ArrowDown size={14} />
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="mt-auto flex gap-2 pt-3">
+                    <button type="button" className="h-9 flex-1 rounded-xl bg-lime font-display text-sm font-semibold text-ink" onClick={() => setEditor(category)}>
+                      Edit
+                    </button>
+                    <button type="button" className="h-9 flex-1 rounded-xl border border-line text-sm" onClick={() => setRemoveTarget(category)}>
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </li>
-            ))}
-          </ul>
-        </>
+            );
+          })}
+        </ul>
       ) : null}
       {editor ? (
         <CategoryEditor
@@ -267,7 +282,7 @@ export function CategoryScreen() {
   );
 }
 
-function CategoryEditor({
+export function CategoryEditor({
   category,
   onClose,
   onSaved,
@@ -287,6 +302,29 @@ function CategoryEditor({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const savedImage = removeImage ? null : resolveProductImage(category?.imageDeliveryPath, readImageBaseUrl());
+
+  /** Runs after the category row is saved. A failure keeps the text changes and reports the image problem. */
+  async function saveImage(categoryId: string, name: string, verb: string) {
+    if (!client) {
+      return;
+    }
+    let message = `${name} was ${verb}.`;
+    if (imageFile) {
+      const uploaded = await uploadCategoryImage(client, categoryId, imageFile);
+      if (!uploaded.ok) {
+        message = `${name} was ${verb}, but its image could not be uploaded: ${uploaded.message}`;
+      }
+    } else if (removeImage) {
+      const removed = await removeCategoryImage(client, categoryId);
+      if (!removed.ok) {
+        message = `${name} was ${verb}, but its image could not be removed: ${removed.message}`;
+      }
+    }
+    onSaved(message);
+  }
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -312,15 +350,15 @@ function CategoryEditor({
       setPending(true);
       setErrors({});
       const result = await createCategory(client, created.payload);
-      setPending(false);
       if (!result.ok) {
+        setPending(false);
         if (await redirect(result)) {
           return;
         }
         setFormError(result.message);
         return;
       }
-      onSaved(`${result.data.name} was added.`);
+      await saveImage(result.data.id, result.data.name, "added");
       return;
     }
     const updated = validateUpdate(
@@ -331,22 +369,24 @@ function CategoryEditor({
       setErrors(updated.errors);
       return;
     }
-    if (!updated.payload) {
+    if (!updated.payload && !imageFile && !removeImage) {
       setFormError("No changes to save.");
       return;
     }
     setPending(true);
     setErrors({});
-    const result = await updateCategory(client, category.id, updated.payload);
-    setPending(false);
-    if (!result.ok) {
-      if (await redirect(result)) {
+    if (updated.payload) {
+      const result = await updateCategory(client, category.id, updated.payload);
+      if (!result.ok) {
+        setPending(false);
+        if (await redirect(result)) {
+          return;
+        }
+        setFormError(result.message);
         return;
       }
-      setFormError(result.message);
-      return;
     }
-    onSaved(`${result.data.name} was saved.`);
+    await saveImage(category.id, draft.name.trim(), "saved");
   }
 
   return (
@@ -359,19 +399,39 @@ function CategoryEditor({
           <Field id="category-name" label="Name" error={errors["name"]}>
             <input id="category-name" value={draft.name} aria-invalid={Boolean(errors["name"])} aria-describedby={describedBy("category-name", errors["name"])} className={controlClassName} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
           </Field>
-          <Field id="category-slug" label="Slug" error={errors["slug"]} hint={category ? "Lowercase letters, numbers, and hyphens." : "Optional. Leave blank and the server will make one from the name."}>
-            <input id="category-slug" value={draft.slug} aria-invalid={Boolean(errors["slug"])} aria-describedby={describedBy("category-slug", errors["slug"], "Optional. Leave blank and the server will make one from the name.")} className={controlClassName} onChange={(event) => setDraft({ ...draft, slug: event.target.value })} />
-          </Field>
-          <Field id="category-description" label="Description" error={errors["description"]} hint="Optional.">
-            <textarea id="category-description" value={draft.description} rows={3} aria-invalid={Boolean(errors["description"])} aria-describedby={describedBy("category-description", errors["description"], "Optional.")} className={controlClassName} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
-          </Field>
-          <label className="flex items-start gap-3 text-sm">
-            <input type="checkbox" className="mt-1" checked={draft.isActive} onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })} />
-            <span>
-              <span className="font-medium">Active</span>
-              <span className="mt-1 block text-muted">Inactive categories stay out of new product assignments. Existing products keep this category.</span>
-            </span>
-          </label>
+          <ImagePicker
+            label="Front image"
+            savedUrl={savedImage}
+            file={imageFile}
+            disabled={pending}
+            onFile={(file) => {
+              setImageFile(file);
+              setRemoveImage(false);
+            }}
+            onRemoveSaved={() => setRemoveImage(true)}
+          />
+          {category ? (
+            <>
+            <Field id="category-description" label="Description" error={errors["description"]} hint="Optional.">
+              <textarea id="category-description" value={draft.description} rows={3} aria-invalid={Boolean(errors["description"])} aria-describedby={describedBy("category-description", errors["description"], "Optional.")} className={controlClassName} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
+            </Field>
+            <label className="flex items-start gap-3 text-sm">
+              <input type="checkbox" className="mt-1" checked={draft.isActive} onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })} />
+              <span>
+                <span className="font-medium">Active</span>
+                <span className="mt-1 block text-muted">Inactive categories and their products are hidden from customers.</span>
+              </span>
+            </label>
+            <details className="text-sm" open={Boolean(errors["slug"])}>
+              <summary className="cursor-pointer font-medium">Advanced</summary>
+              <div className="mt-3">
+              <Field id="category-slug" label="Slug" error={errors["slug"]} hint={category ? "Lowercase letters, numbers, and hyphens." : "Optional. Leave blank and the server will make one from the name."}>
+                <input id="category-slug" value={draft.slug} aria-invalid={Boolean(errors["slug"])} aria-describedby={describedBy("category-slug", errors["slug"], "Optional. Leave blank and the server will make one from the name.")} className={controlClassName} onChange={(event) => setDraft({ ...draft, slug: event.target.value })} />
+              </Field>
+              </div>
+            </details>
+            </>
+          ) : null}
           {formError ? (
             <p className="rounded-xl border border-line bg-wash px-4 py-3 text-sm" role="alert">
               {formError}
@@ -384,7 +444,7 @@ function CategoryEditor({
             Cancel
           </button>
           <button type="submit" className="h-11 rounded-xl bg-ink px-4 text-sm font-medium text-white disabled:opacity-60" disabled={pending}>
-            {pending ? "Saving" : category ? "Save category" : "Create category"}
+            {pending ? "Saving" : "Save Category"}
           </button>
         </div>
       </form>

@@ -95,13 +95,35 @@ export const categories = pgTable(
     slug: text("slug").notNull(),
     description: text("description"),
     isActive: boolean("is_active").notNull().default(true),
+    imageObjectKey: text("image_object_key"),
+    imageDeliveryPath: text("image_delivery_path"),
+    sortOrder: integer("sort_order").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     unique("categories_slug_unique").on(table.slug),
+    check("categories_image_pair", sql`(${table.imageObjectKey} IS NULL) = (${table.imageDeliveryPath} IS NULL)`),
+    index("categories_sort_order_idx").on(table.sortOrder),
     check("categories_slug_format", slug(table.slug)),
     check("categories_name_length", sql`char_length(${table.name}) between 1 and 160`),
+  ],
+);
+
+export const homeDailyTiles = pgTable(
+  "home_daily_tiles",
+  {
+    position: integer("position").primaryKey(),
+    label: text("label").notNull(),
+    categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+    imageObjectKey: text("image_object_key"),
+    imageDeliveryPath: text("image_delivery_path"),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    check("home_daily_tiles_position_range", sql`${table.position} BETWEEN 1 AND 4`),
+    check("home_daily_tiles_label_length", sql`char_length(${table.label}) BETWEEN 1 AND 40`),
+    check("home_daily_tiles_image_pair", sql`(${table.imageObjectKey} IS NULL) = (${table.imageDeliveryPath} IS NULL)`),
   ],
 );
 
@@ -211,6 +233,7 @@ export const storeProducts = pgTable(
       .notNull()
       .references(() => products.id, { onDelete: "restrict" }),
     pricePaise: integer("price_paise").notNull(),
+    mrpPaise: integer("mrp_paise"),
     stockQuantity: integer("stock_quantity").notNull(),
     availability: storeProductAvailabilityEnum("availability").notNull(),
     createdAt: createdAt(),
@@ -221,6 +244,7 @@ export const storeProducts = pgTable(
     unique("store_products_store_product_unique").on(table.storeId, table.productId),
     unique("store_products_product_unique").on(table.productId),
     check("store_products_price_nonnegative", sql`${table.pricePaise} >= 0`),
+    check("store_products_mrp_nonnegative", sql`${table.mrpPaise} IS NULL OR ${table.mrpPaise} >= 0`),
     check("store_products_stock_nonnegative", sql`${table.stockQuantity} >= 0`),
     check(
       "store_products_available_requires_stock",

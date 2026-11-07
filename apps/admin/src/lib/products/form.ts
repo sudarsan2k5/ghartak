@@ -20,6 +20,7 @@ export type ProductDraft = {
   packageSize: string;
   packageLabel: string;
   priceRupees: string;
+  mrpRupees: string;
   openingStock: string;
   openingReason: string;
   brand: string;
@@ -58,6 +59,7 @@ export function emptyProductDraft(): ProductDraft {
     packageSize: "",
     packageLabel: "",
     priceRupees: "",
+    mrpRupees: "",
     openingStock: "0",
     openingReason: "",
     brand: "",
@@ -74,6 +76,12 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
   const price = rupeesToPaise(input.priceRupees);
   if (!price.ok) {
     errors["priceRupees"] = price.message;
+  }
+  const mrp = input.mrpRupees.trim() ? rupeesToPaise(input.mrpRupees) : null;
+  if (mrp && !mrp.ok) {
+    errors["mrpRupees"] = mrp.message;
+  } else if (mrp?.ok && price.ok && mrp.paise < price.paise) {
+    errors["mrpRupees"] = "MRP cannot be below the selling price.";
   }
   const stock = parseStock(input.openingStock);
   if (!stock.ok) {
@@ -96,6 +104,8 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
     packageLabel: input.packageLabel,
     pricePaise: price.ok ? price.paise : 0,
     openingStockQuantity: stock.ok ? stock.value : 0,
+    ...(mrp?.ok ? { mrpPaise: mrp.paise } : {}),
+    ...(input.publicationStatus === "published" ? { publicationStatus: "published" as const } : {}),
     ...(input.brand.trim() ? { brand: input.brand } : {}),
     ...(input.barcode.trim() ? { barcode: input.barcode } : {}),
     ...(input.description.trim() ? { description: input.description } : {}),

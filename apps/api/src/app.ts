@@ -15,6 +15,7 @@ import { registerAdminImageRoutes } from "./modules/admin/images/image.route.js"
 import { maxImageBytes } from "./modules/admin/images/image-policy.js";
 import { createImageStorage, type ImageStorage, type ImageStorageConfig } from "./modules/admin/images/image-storage.js";
 import multipart from "@fastify/multipart";
+import { registerAdminDailyTileRoutes } from "./modules/admin/daily-tiles/daily-tile.route.js";
 import { registerAdminInventoryRoutes } from "./modules/admin/inventory/inventory.route.js";
 import { registerAdminProductRoutes } from "./modules/admin/products/product.route.js";
 import { registerHealthRoutes } from "./modules/health/health.route.js";
@@ -162,15 +163,14 @@ export async function buildApp(dependencies: AppDependencies) {
       });
       registerAuthRoutes(instance, { ...auth, db: dependencies.db, redis: dependencies.redis });
       registerAdminProductRoutes(instance, dependencies.db);
-      registerAdminCategoryRoutes(instance, dependencies.db);
-      registerAdminInventoryRoutes(instance, dependencies.db);
-      registerAdminImageRoutes(
-        instance,
-        dependencies.db,
+      const imageStorage =
         dependencies.imageStorageClient === undefined
           ? createImageStorage(dependencies.imageStorage ?? null)
-          : dependencies.imageStorageClient,
-      );
+          : dependencies.imageStorageClient;
+      registerAdminCategoryRoutes(instance, dependencies.db, imageStorage);
+      registerAdminInventoryRoutes(instance, dependencies.db);
+      registerAdminImageRoutes(instance, dependencies.db, imageStorage);
+      registerAdminDailyTileRoutes(instance, dependencies.db, imageStorage);
       registerAdminSettingsRoutes(instance, dependencies.db);
       registerAdminOrderRoutes(instance, dependencies.db);
     },

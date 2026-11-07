@@ -48,8 +48,22 @@ Query parameters for the list are `page`, `limit` (max 50), `categoryId`, `searc
 | POST | `/admin/categories` | Create a category. The slug is derived from the name when omitted |
 | PATCH | `/admin/categories/:categoryId` | Update name, slug, description, or `isActive` |
 | DELETE | `/admin/categories/:categoryId` | Delete only when the category has no products |
+| PUT | `/admin/categories/order` | Save the display order. `categoryIds` must list every category, or the request returns `409` |
+| POST | `/admin/categories/:categoryId/image` | Upload or replace the front image (multipart, one JPEG, PNG, or WebP up to 5 MB) |
+| DELETE | `/admin/categories/:categoryId/image` | Remove the front image |
 
 A category that still has products returns `409`. Deactivate it with `isActive: false`, or move the products first. There is no separate archive column.
+
+## Your daily everything
+
+There are always four boxes, addressed by `position` 1 to 4.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/admin/daily-tiles` | The four boxes with their linked category names |
+| PATCH | `/admin/daily-tiles/:position` | Update `label` (1 to 40 characters) or `categoryId` (`null` opens all categories) |
+| POST | `/admin/daily-tiles/:position/image` | Upload or replace the image (same file rules as category images) |
+| DELETE | `/admin/daily-tiles/:position/image` | Remove the image |
 
 ## Price and stock
 

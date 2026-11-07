@@ -1,8 +1,9 @@
 import { pathToFileURL } from "node:url";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { closeDatabase, openDatabase, withTransaction, type Database } from "./client.js";
 import {
   categories,
+  homeDailyTiles,
   inventoryMovements,
   productAttributes,
   productImages,
@@ -273,6 +274,15 @@ export async function seedDatabase(db: Database): Promise<SeedSummary> {
       ])
       .onConflictDoNothing({ target: productAttributes.id })
       .returning({ id: productAttributes.id });
+
+    await tx
+      .update(homeDailyTiles)
+      .set({ categoryId: seedIds.produce })
+      .where(and(eq(homeDailyTiles.position, 1), isNull(homeDailyTiles.categoryId)));
+    await tx
+      .update(homeDailyTiles)
+      .set({ categoryId: seedIds.staples })
+      .where(and(eq(homeDailyTiles.position, 2), isNull(homeDailyTiles.categoryId)));
 
     return {
       serviceZones: zoneRows.length,

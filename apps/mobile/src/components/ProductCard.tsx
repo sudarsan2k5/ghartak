@@ -35,6 +35,13 @@ export function ProductCard({
     >
       <View className="relative h-[104px] items-center justify-center overflow-hidden">
         <CatalogueImage deliveryPath={product.deliveryPath} alt={product.imageAlt} />
+        {product.discountPercent ? (
+          <View className="absolute left-0 top-0 rounded-md bg-lime px-1.5 py-0.5">
+            <AppText family="inter" weight="extrabold" className="text-[9px] text-ink">
+              {`${product.discountPercent}% OFF`}
+            </AppText>
+          </View>
+        ) : null}
       </View>
       <View className="mt-[7px] gap-[7px]">
         <View>
@@ -48,8 +55,11 @@ export function ProductCard({
         <AppText family="inter" weight="regular" className="text-[10px] text-muted" numberOfLines={1}>
           {product.unit}
         </AppText>
-        <View className="flex-row items-end justify-between">
-          <PriceText paise={product.pricePaise} />
+        <View className="flex-row flex-wrap items-end justify-between gap-y-1.5">
+          <View>
+            <PriceText paise={product.pricePaise} />
+            {product.discountPercent && product.mrpPaise ? <PriceText paise={product.mrpPaise} struck /> : null}
+          </View>
           {product.purchasable && !unavailableLabel ? (
             <QuantitySelector quantity={quantity} maxQuantity={maxQuantity} onChange={onQuantityChange} />
           ) : (

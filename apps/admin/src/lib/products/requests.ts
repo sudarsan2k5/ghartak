@@ -30,12 +30,19 @@ export function updateProduct(client: ApiClient, productId: string, body: unknow
   return client.patch(`/api/v1/admin/products/${productId}`, adminProductSchema, body);
 }
 
+export function publishProduct(client: ApiClient, productId: string) {
+  return client.patch(`/api/v1/admin/products/${productId}`, adminProductSchema, { publicationStatus: "published", isActive: true });
+}
+
 export function archiveProduct(client: ApiClient, productId: string) {
   return client.delete(`/api/v1/admin/products/${productId}`, adminProductSchema);
 }
 
-export function updateProductPrice(client: ApiClient, productId: string, pricePaise: number) {
-  return client.patch(`/api/v1/admin/products/${productId}/price`, adminPriceResponseSchema, { pricePaise });
+export function updateProductPrice(client: ApiClient, productId: string, pricePaise: number, mrpPaise?: number | null) {
+  return client.patch(`/api/v1/admin/products/${productId}/price`, adminPriceResponseSchema, {
+    pricePaise,
+    ...(mrpPaise !== undefined ? { mrpPaise } : {}),
+  });
 }
 
 export function uploadProductImage(

@@ -17,12 +17,13 @@ export function createAdminInventoryService(db: Database) {
         const listing = await lockListing(tx, productId);
         await tx
           .update(storeProducts)
-          .set({ pricePaise: input.pricePaise })
+          .set({ pricePaise: input.pricePaise, ...(input.mrpPaise !== undefined ? { mrpPaise: input.mrpPaise } : {}) })
           .where(eq(storeProducts.id, listing.id));
         return {
           productId,
           inventory: {
             pricePaise: input.pricePaise,
+            mrpPaise: input.mrpPaise !== undefined ? input.mrpPaise : listing.mrpPaise,
             stockQuantity: listing.stockQuantity,
             availability: listing.availability,
           },
@@ -65,7 +66,7 @@ export function createAdminInventoryService(db: Database) {
         }
         return {
           productId,
-          inventory: { pricePaise: listing.pricePaise, stockQuantity: stockAfter, availability },
+          inventory: { pricePaise: listing.pricePaise, mrpPaise: listing.mrpPaise, stockQuantity: stockAfter, availability },
           movement,
         };
       });
@@ -91,6 +92,7 @@ async function lockListing(
     .select({
       id: storeProducts.id,
       pricePaise: storeProducts.pricePaise,
+      mrpPaise: storeProducts.mrpPaise,
       stockQuantity: storeProducts.stockQuantity,
       availability: storeProducts.availability,
     })

@@ -21,6 +21,7 @@ export {
   cartStatusEnum,
   carts,
   categories,
+  homeDailyTiles,
   inventoryMovementTypeEnum,
   guestCheckoutRequests,
   inventoryMovements,

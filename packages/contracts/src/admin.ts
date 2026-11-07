@@ -69,9 +69,13 @@ export const adminProductCreateSchema = z.object({
   isActive: z.boolean().optional(),
   attributes: attributeListSchema.optional(),
   pricePaise: paiseSchema,
+  mrpPaise: paiseSchema.nullable().optional(),
   openingStockQuantity: z.number().int().nonnegative(),
   openingReason: reasonSchema.optional(),
 }).superRefine((value, ctx) => {
+  if (typeof value.mrpPaise === "number" && value.mrpPaise < value.pricePaise) {
+    ctx.addIssue({ code: "custom", path: ["mrpPaise"], message: "MRP cannot be below the selling price" });
+  }
   if (value.openingStockQuantity > 0 && !value.openingReason) {
     ctx.addIssue({
       code: "custom",
@@ -114,9 +118,19 @@ export const adminCategoryUpdateSchema = z
   })
   .refine((value) => Object.keys(value).length > 0, { message: "At least one field is required" });
 
-export const adminPriceUpdateSchema = z.object({
-  pricePaise: paiseSchema,
+export const adminCategoryOrderSchema = z.object({
+  categoryIds: z.array(z.uuid()).min(1).refine((ids) => new Set(ids).size === ids.length, { message: "Category ids must be unique" }),
 });
+
+export const adminPriceUpdateSchema = z
+  .object({
+    pricePaise: paiseSchema,
+    mrpPaise: paiseSchema.nullable().optional(),
+  })
+  .refine((value) => typeof value.mrpPaise !== "number" || value.mrpPaise >= value.pricePaise, {
+    path: ["mrpPaise"],
+    message: "MRP cannot be below the selling price",
+  });
 
 export const adminStockChangeSchema = z.discriminatedUnion("type", [
   z.object({
@@ -153,6 +167,7 @@ export const adminCategorySchema = z.object({
   slug: z.string(),
   description: z.string().nullable(),
   isActive: z.boolean(),
+  imageDeliveryPath: z.string().nullable(),
   productCount: z.number().int().nonnegative(),
 });
 
@@ -160,8 +175,28 @@ export const adminCategoryListResponseSchema = z.object({
   categories: z.array(adminCategorySchema),
 });
 
+export const adminDailyTileSchema = z.object({
+  position: z.number().int().min(1).max(4),
+  label: z.string(),
+  imageDeliveryPath: z.string().nullable(),
+  categoryId: z.uuid().nullable(),
+  categoryName: z.string().nullable(),
+});
+
+export const adminDailyTileListResponseSchema = z.object({
+  tiles: z.array(adminDailyTileSchema),
+});
+
+export const adminDailyTileUpdateSchema = z
+  .object({
+    label: z.string().trim().min(1).max(40).optional(),
+    categoryId: z.uuid().nullable().optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, { message: "At least one field is required" });
+
 export const adminInventorySchema = z.object({
   pricePaise: paiseSchema,
+  mrpPaise: paiseSchema.nullable().default(null),
   stockQuantity: z.number().int().nonnegative(),
   availability: storeProductAvailabilitySchema,
 });
@@ -204,6 +239,7 @@ export const adminProductSummarySchema = z.object({
   publicationStatus: productPublicationStatusSchema,
   isActive: z.boolean(),
   inventory: adminInventorySchema,
+  primaryImagePath: z.string().nullable().default(null),
 });
 
 export const adminProductSchema = adminProductSummarySchema.extend({
@@ -254,6 +290,8 @@ export type AdminLoginRequest = z.infer<typeof adminLoginRequestSchema>;
 export type AdminSessionResponse = z.infer<typeof adminSessionResponseSchema>;
 export type AdminProductCreate = z.infer<typeof adminProductCreateSchema>;
 export type AdminProductUpdate = z.infer<typeof adminProductUpdateSchema>;
+export type AdminCategoryOrder = z.infer<typeof adminCategoryOrderSchema>;
+export type AdminDailyTileUpdate = z.infer<typeof adminDailyTileUpdateSchema>;
 export type AdminCategoryCreate = z.infer<typeof adminCategoryCreateSchema>;
 export type AdminCategoryUpdate = z.infer<typeof adminCategoryUpdateSchema>;
 export type AdminPriceUpdate = z.infer<typeof adminPriceUpdateSchema>;

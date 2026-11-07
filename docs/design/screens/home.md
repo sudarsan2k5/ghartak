@@ -37,16 +37,15 @@ Ink card, height 142, radius 18, padding 16, gap 12.
 
 Heading `Your daily everything`, ExtraBold 19, with `See all →` at Inter Semi Bold 12.
 
-Two rows of four tiles, gap 10 between tiles and 12 between rows.
+One row of four tiles, gap 10. Names and images are set in the admin dashboard under Categories, Your daily everything. The default names are:
 
-| Fruits & veggies | Dairy, bread & eggs | Breakfast & more | Munchies & drinks |
-| Atta, rice & dal | Sweet cravings | Bath & body | Home essentials |
+| Vegetables | Atta, Rice & Dal | Oil, Ghee & Masala | Drinks & Biscuits |
 
 ## Daily list
 
 Heading `On your daily list` and `See all →`.
 
-Two 175 px cards, gap 12.
+All active products in a two-column grid, gap 12. More products load as the customer scrolls.
 
 | Product | Discount | Unit | Price | Was | Quantity |
 | --- | --- | --- | --- | --- | --- |

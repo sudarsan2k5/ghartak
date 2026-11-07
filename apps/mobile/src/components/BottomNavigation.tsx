@@ -21,7 +21,9 @@ export function BottomNavigation({ state, emitter, navigateToTab, insets }: Bott
           if (!tab) {
             return null;
           }
-          const selected = state.index === index;
+          const focused = state.index === index;
+          const browsingCategory = state.routes[state.index]?.name === "category/[id]" && route.name === "categories";
+          const selected = focused || browsingCategory;
           const color = selected ? colors.ink : colors.muted;
           return (
             <Pressable
@@ -35,7 +37,7 @@ export function BottomNavigation({ state, emitter, navigateToTab, insets }: Bott
                   target: route.key,
                   canPreventDefault: true,
                 });
-                if (!selected && !event.defaultPrevented) {
+                if (!focused && !event.defaultPrevented) {
                   navigateToTab(route.key);
                 }
               }}

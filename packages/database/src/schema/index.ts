@@ -20,6 +20,7 @@ export {
 export { adminSessions, userAddresses, userRoles, users } from "./identity.js";
 export {
   categories,
+  homeDailyTiles,
   productAttributes,
   productImages,
   products,

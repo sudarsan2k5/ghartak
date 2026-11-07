@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
-    "test": "tsc -p tsconfig.test.json && node --env-file=../../.env --test-concurrency=1 --test dist-test/test/catalogue.test.js dist-test/test/admin.test.js dist-test/test/checkout.test.js dist-test/test/admin-orders.test.js dist-test/test/order-status.test.js dist-test/test/image-upload.test.js dist-test/test/image-lifecycle.test.js",
+    "test": "tsc -p tsconfig.test.json && node --env-file=../../.env --test-concurrency=1 --test dist-test/test/catalogue.test.js dist-test/test/daily-tiles.test.js dist-test/test/admin.test.js dist-test/test/checkout.test.js dist-test/test/admin-orders.test.js dist-test/test/order-status.test.js dist-test/test/image-upload.test.js dist-test/test/image-lifecycle.test.js",
     "dev": "node --env-file=../../.env --watch dist/server.js",
     "start": "node --env-file=../../.env dist/server.js",
     "admin:create": "node --env-file=../../.env dist/cli/create-admin.js"

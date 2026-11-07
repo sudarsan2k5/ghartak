@@ -1,5 +1,6 @@
 import {
   categoryListResponseSchema,
+  dailyTileListResponseSchema,
   errorResponseSchema,
   parseProductIdParam,
   parseProductListQuery,
@@ -32,6 +33,10 @@ export function registerCatalogueRoutes(
 
   app.get("/categories", async () => {
     return categoryListResponseSchema.parse(await catalogue.listCategories());
+  });
+
+  app.get("/home/daily-tiles", async () => {
+    return dailyTileListResponseSchema.parse(await catalogue.listDailyTiles());
   });
 
   app.get("/products", async (request) => {

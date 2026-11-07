@@ -23,6 +23,7 @@ const sample = {
   slug: "staples",
   description: "Grains and pulses",
   isActive: true,
+  imageDeliveryPath: null,
   productCount: 2,
 };
 

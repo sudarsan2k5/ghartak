@@ -41,6 +41,7 @@ export const catalogueProductSummarySchema = z.object({
   packageSize: z.number().positive(),
   packageLabel: z.string(),
   pricePaise: paiseSchema,
+  mrpPaise: paiseSchema.nullable().default(null),
   stock: catalogueStockSchema,
   primaryImage: catalogueImageSchema.nullable(),
 });
@@ -58,8 +59,23 @@ export const paginationSchema = z.object({
   pageCount: z.number().int().nonnegative(),
 });
 
+export const categoryListItemSchema = catalogueCategorySchema.extend({
+  imageDeliveryPath: z.string().nullable(),
+});
+
 export const categoryListResponseSchema = z.object({
-  categories: z.array(catalogueCategorySchema),
+  categories: z.array(categoryListItemSchema),
+});
+
+export const dailyTileSchema = z.object({
+  position: z.number().int().min(1).max(4),
+  label: z.string(),
+  imageDeliveryPath: z.string().nullable(),
+  categoryId: z.uuid().nullable(),
+});
+
+export const dailyTileListResponseSchema = z.object({
+  tiles: z.array(dailyTileSchema),
 });
 
 export const productListResponseSchema = z.object({
@@ -106,6 +122,8 @@ export type CatalogueAttribute = z.infer<typeof catalogueAttributeSchema>;
 export type ProductListQuery = z.infer<typeof productListQuerySchema>;
 export type ProductListResponse = z.infer<typeof productListResponseSchema>;
 export type ProductDetailResponse = z.infer<typeof productDetailResponseSchema>;
+export type DailyTile = z.infer<typeof dailyTileSchema>;
+export type DailyTileListResponse = z.infer<typeof dailyTileListResponseSchema>;
 export type CategoryListResponse = z.infer<typeof categoryListResponseSchema>;
 export type CatalogueProductSort = (typeof catalogueProductSortValues)[number];
 

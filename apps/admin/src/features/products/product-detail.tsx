@@ -107,7 +107,10 @@ export function ProductDetail({ productId }: { productId: string }) {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <p className="text-sm text-muted">{product.sku}</p>
+          <Link href={`/categories/${product.category.id}`} className="text-sm font-medium text-secondary underline">
+            ← {product.category.name}
+          </Link>
+          <p className="mt-2 text-sm text-muted">{product.sku}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge value={product.publicationStatus} />
             <StatusBadge value={product.inventory.availability} />
@@ -185,7 +188,7 @@ export function ProductDetail({ productId }: { productId: string }) {
             : "Movement history is not available from the admin API. An adjustment writes a ledger row on the server and then this page shows the resulting stock."}
         </p>
       </section>
-      <PriceEditor productId={product.id} pricePaise={product.inventory.pricePaise} onSaved={(pricePaise) => setProduct({ ...product, inventory: { ...product.inventory, pricePaise } })} />
+      <PriceEditor productId={product.id} pricePaise={product.inventory.pricePaise} mrpPaise={product.inventory.mrpPaise} onSaved={(pricePaise, mrpPaise) => setProduct({ ...product, inventory: { ...product.inventory, pricePaise, mrpPaise } })} />
       {stockOpen ? (
         <StockAdjustment
           product={{

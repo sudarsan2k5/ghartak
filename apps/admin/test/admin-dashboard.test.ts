@@ -270,6 +270,7 @@ function sampleProduct(input: {
     packageLabel: "1 kg",
     publicationStatus: "published",
     isActive: true,
-    inventory: { pricePaise: 12000, stockQuantity: input.stockQuantity, availability: input.availability },
+    primaryImagePath: null,
+    inventory: { pricePaise: 12000, mrpPaise: null, stockQuantity: input.stockQuantity, availability: input.availability },
   };
 }

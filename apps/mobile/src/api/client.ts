@@ -1,8 +1,11 @@
 import {
   categoryListResponseSchema,
+  dailyTileListResponseSchema,
   productDetailResponseSchema,
   productListResponseSchema,
+  type CatalogueProductSort,
   type CategoryListResponse,
+  type DailyTileListResponse,
   type ProductDetailResponse,
   type ProductListResponse,
 } from "@ghartak/contracts";
@@ -28,6 +31,7 @@ export type ProductListParams = {
   categoryId?: string;
   search?: string;
   inStock?: boolean;
+  sort?: CatalogueProductSort;
 };
 
 export function getApiBaseUrl(): string {
@@ -42,6 +46,10 @@ export function getApiBaseUrl(): string {
 
 export async function listCategories(signal?: AbortSignal): Promise<CategoryListResponse> {
   return request("/api/v1/categories", categoryListResponseSchema, signal);
+}
+
+export async function listDailyTiles(signal?: AbortSignal): Promise<DailyTileListResponse> {
+  return request("/api/v1/home/daily-tiles", dailyTileListResponseSchema, signal);
 }
 
 export async function listProducts(
@@ -63,6 +71,9 @@ export async function listProducts(
   }
   if (params.inStock) {
     search.set("inStock", "true");
+  }
+  if (params.sort) {
+    search.set("sort", params.sort);
   }
   const query = search.toString();
   return request(`/api/v1/products${query ? `?${query}` : ""}`, productListResponseSchema, signal);

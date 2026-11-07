@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
-import { getProduct, listCategories, listProducts, type ProductListParams } from "@/api/client";
+import { getProduct, listCategories, listDailyTiles, listProducts, type ProductListParams } from "@/api/client";
 
 const staleTimeMs = 60_000;
 
 export const catalogueKeys = {
   categories: ["catalogue", "categories"] as const,
+  dailyTiles: ["catalogue", "daily-tiles"] as const,
   products: (params: ProductListParams) => ["catalogue", "products", params] as const,
   product: (productId: string) => ["catalogue", "product", productId] as const,
 };
@@ -19,10 +20,10 @@ export function useCategories() {
   });
 }
 
-export function useProductPage(params: ProductListParams) {
+export function useDailyTiles() {
   return useQuery({
-    queryKey: catalogueKeys.products(params),
-    queryFn: ({ signal }) => listProducts(params, signal),
+    queryKey: catalogueKeys.dailyTiles,
+    queryFn: ({ signal }) => listDailyTiles(signal),
     staleTime: staleTimeMs,
     retry: 1,
   });

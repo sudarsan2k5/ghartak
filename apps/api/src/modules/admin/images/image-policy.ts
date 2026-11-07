@@ -95,6 +95,10 @@ function pngIsAnimated(body: Uint8Array): boolean {
   return false;
 }
 
+export function displayObjectKey(scope: string, imageId: string, contentType: ImageContentType): string {
+  return `display/${scope}/${imageId}.${mimeExtensions[contentType]}`;
+}
+
 export function catalogueObjectKey(productId: string, imageId: string, contentType: ImageContentType): string {
   return `catalog/${productId}/${imageId}.${mimeExtensions[contentType]}`;
 }

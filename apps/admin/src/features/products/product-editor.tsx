@@ -1,10 +1,12 @@
 "use client";
 
 import { productUnitValues } from "@ghartak/contracts";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { controlClassName, describedBy, Field } from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ImagePicker } from "@/components/ui/image-picker";
 import { useAuthRedirect } from "@/features/auth/use-auth-redirect";
 import { useSession } from "@/features/auth/session-provider";
 import {
@@ -16,7 +18,7 @@ import {
   type ProductDraft,
 } from "@/lib/products/form";
 import { assignableCategories, categoryOptionLabel } from "@/lib/categories/form";
-import { createProduct, fetchCategories, fetchProduct, updateProduct } from "@/lib/products/requests";
+import { createProduct, fetchCategories, fetchProduct, updateProduct, uploadProductImage } from "@/lib/products/requests";
 import { paiseToRupeeInput } from "@/lib/products/money";
 
 const unitLabels: Record<(typeof productUnitValues)[number], string> = {
@@ -27,17 +29,22 @@ const unitLabels: Record<(typeof productUnitValues)[number], string> = {
   ml: "Millilitre",
 };
 
-export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; productId?: string }) {
+export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "create" | "edit"; productId?: string; fixedCategoryId?: string }) {
   const router = useRouter();
   const { client } = useSession();
   const redirect = useAuthRedirect();
-  const [draft, setDraft] = useState<ProductDraft>(emptyProductDraft);
+  const [draft, setDraft] = useState<ProductDraft>(() =>
+    fixedCategoryId
+      ? { ...emptyProductDraft(), categoryId: fixedCategoryId, publicationStatus: "published", openingReason: "Opening stock" }
+      : emptyProductDraft(),
+  );
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [original, setOriginal] = useState<LoadedProduct | null>(null);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; isActive: boolean }>>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [loading, setLoading] = useState(mode === "edit");
+  const [loading, setLoading] = useState(mode === "edit" || Boolean(fixedCategoryId));
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
@@ -61,7 +68,12 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
         return;
       }
       if (mode === "create" || !productId) {
-        setCategories(assignableCategories(categoryResult.data.categories));
+        if (fixedCategoryId && !categoryResult.data.categories.some((category) => category.id === fixedCategoryId)) {
+          setLoadError("This category no longer exists.");
+          setLoading(false);
+          return;
+        }
+        setCategories(assignableCategories(categoryResult.data.categories, fixedCategoryId));
         setLoading(false);
         return;
       }
@@ -105,7 +117,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
     return () => {
       cancelled = true;
     };
-  }, [client, mode, productId, redirect]);
+  }, [client, fixedCategoryId, mode, productId, redirect]);
 
   function update<K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -128,15 +140,28 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
       setErrors({});
       setPending(true);
       const result = await createProduct(client, parsed.payload);
-      setPending(false);
       if (!result.ok) {
+        setPending(false);
         if (await redirect(result)) {
           return;
         }
         setFormError(result.message);
         return;
       }
-      router.replace(`/products/${result.data.id}`);
+      if (imageFile) {
+        const uploaded = await uploadProductImage(client, result.data.id, {
+          file: imageFile,
+          altText: result.data.name,
+          isPrimary: true,
+          idempotencyKey: crypto.randomUUID(),
+        });
+        if (!uploaded.ok) {
+          // The product exists, so open it where the image can be retried.
+          router.replace(`/products/${result.data.id}`);
+          return;
+        }
+      }
+      router.replace(fixedCategoryId ? `/categories/${fixedCategoryId}` : `/products/${result.data.id}`);
       return;
     }
     if (!original || !productId) {
@@ -208,13 +233,18 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
 
   return (
     <form className="max-w-3xl space-y-6" onSubmit={(event) => void onSubmit(event)} noValidate>
+      {fixedCategoryId || original ? (
+        <Link href={`/categories/${fixedCategoryId ?? original?.categoryId}`} className="text-sm font-medium text-secondary underline">
+          ← {categories.find((category) => category.id === (fixedCategoryId ?? original?.categoryId))?.name ?? "Category"}
+        </Link>
+      ) : null}
       {formError ? (
         <p className="rounded-xl border border-line bg-wash px-4 py-3 text-sm" role="alert">
           {formError}
         </p>
       ) : null}
       {mode === "create" ? (
-        <p className="text-sm text-secondary">New products are saved as drafts. Price and opening stock create the one central listing.</p>
+        <p className="text-sm text-secondary">Price and opening stock create the one central listing.</p>
       ) : (
         <p className="text-sm text-secondary">This form updates catalogue fields only. Price is saved separately and does not travel with this request.</p>
       )}
@@ -225,6 +255,14 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
         <Field id="sku" label="SKU" error={errors["sku"]} hint="Uppercase letters, numbers, and hyphens.">
           <input id="sku" value={draft.sku} aria-invalid={errors["sku"] !== undefined} aria-describedby={describedBy("sku", errors["sku"], "Uppercase letters, numbers, and hyphens.")} className={controlClassName} onChange={(event) => update("sku", event.target.value)} />
         </Field>
+        {fixedCategoryId ? (
+          <div>
+            <p className="text-sm font-medium">Category</p>
+            <p className="mt-2 flex h-12 items-center rounded-xl border border-line bg-wash px-3 text-sm">
+              {categories.find((category) => category.id === fixedCategoryId)?.name}
+            </p>
+          </div>
+        ) : (
         <Field id="category" label="Category" error={errors["categoryId"]}>
           <select id="category" value={draft.categoryId} aria-invalid={errors["categoryId"] !== undefined} aria-describedby={describedBy("category", errors["categoryId"])} className={controlClassName} onChange={(event) => update("categoryId", event.target.value)}>
             <option value="">Choose a category</option>
@@ -235,6 +273,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
             ))}
           </select>
         </Field>
+        )}
         <Field id="unit" label="Unit" error={errors["unit"]}>
           <select id="unit" value={draft.unit} aria-invalid={errors["unit"] !== undefined} aria-describedby={describedBy("unit", errors["unit"])} className={controlClassName} onChange={(event) => update("unit", event.target.value)}>
             <option value="">Choose a unit</option>
@@ -255,6 +294,9 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
           <>
             <Field id="price" label="Price in rupees" error={errors["priceRupees"]} hint="Stored as integer paise.">
               <input id="price" inputMode="decimal" value={draft.priceRupees} aria-invalid={errors["priceRupees"] !== undefined} aria-describedby={describedBy("price", errors["priceRupees"], "Stored as integer paise.")} className={controlClassName} onChange={(event) => update("priceRupees", event.target.value)} />
+            </Field>
+            <Field id="mrp" label="MRP in rupees" error={errors["mrpRupees"]} hint="Optional. Customers see a discount when MRP is above the price.">
+              <input id="mrp" inputMode="decimal" value={draft.mrpRupees} aria-invalid={errors["mrpRupees"] !== undefined} aria-describedby={describedBy("mrp", errors["mrpRupees"], "Optional. Customers see a discount when MRP is above the price.")} className={controlClassName} onChange={(event) => update("mrpRupees", event.target.value)} />
             </Field>
             <Field id="opening-stock" label="Opening stock" error={errors["openingStock"]}>
               <input id="opening-stock" inputMode="numeric" value={draft.openingStock} aria-invalid={errors["openingStock"] !== undefined} aria-describedby={describedBy("opening-stock", errors["openingStock"])} className={controlClassName} onChange={(event) => update("openingStock", event.target.value)} />
@@ -277,6 +319,25 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
             <textarea id="description" rows={4} value={draft.description} aria-invalid={errors["description"] !== undefined} aria-describedby={describedBy("description", errors["description"], "Optional.")} className={controlClassName} onChange={(event) => update("description", event.target.value)} />
           </Field>
         </div>
+        {mode === "create" ? (
+          <>
+            <div className="md:col-span-2">
+              <ImagePicker label="Product image" savedUrl={null} file={imageFile} disabled={pending} onFile={setImageFile} onRemoveSaved={() => setImageFile(null)} />
+            </div>
+            <label className="flex items-start gap-3 text-sm md:col-span-2">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={draft.publicationStatus === "published"}
+                onChange={(event) => update("publicationStatus", event.target.checked ? "published" : "draft")}
+              />
+              <span>
+                <span className="font-medium">Show in the customer app now</span>
+                <span className="mt-1 block text-muted">Leave this off to save the product as a draft.</span>
+              </span>
+            </label>
+          </>
+        ) : null}
         {mode === "edit" && original ? (
           <>
             <Field id="publication" label="Publication" hint={archived ? "Archived products stay archived until you restore them to draft." : "Saving publishes or returns the product to draft."}>
@@ -329,7 +390,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
       </section>
       <div className="flex flex-col gap-3 sm:flex-row">
         <button type="submit" disabled={pending || client === null} className="rounded-xl bg-lime px-4 py-3 font-display text-sm font-semibold text-ink disabled:opacity-60">
-          {pending ? "Saving" : mode === "create" ? "Create draft" : "Save product"}
+          {pending ? "Saving" : mode === "create" && draft.publicationStatus !== "published" ? "Create draft" : "Save product"}
         </button>
         {archived ? (
           <button type="button" className="rounded-xl border border-line bg-white px-4 py-3 text-sm font-medium" onClick={() => setRestoreOpen(true)}>

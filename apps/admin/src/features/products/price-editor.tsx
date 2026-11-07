@@ -11,15 +11,19 @@ import { formatPaise } from "@/lib/utils/format";
 export function PriceEditor({
   productId,
   pricePaise,
+  mrpPaise,
   onSaved,
 }: {
   productId: string;
   pricePaise: number;
-  onSaved: (pricePaise: number) => void;
+  mrpPaise: number | null;
+  onSaved: (pricePaise: number, mrpPaise: number | null) => void;
 }) {
   const { client } = useSession();
   const redirect = useAuthRedirect();
   const [rupees, setRupees] = useState(paiseToRupeeInput(pricePaise));
+  const [mrpRupees, setMrpRupees] = useState(mrpPaise === null ? "" : paiseToRupeeInput(mrpPaise));
+  const [mrpError, setMrpError] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -35,10 +39,22 @@ export function PriceEditor({
       setSaved(false);
       return;
     }
+    const mrp = mrpRupees.trim() ? rupeesToPaise(mrpRupees) : null;
+    if (mrp && !mrp.ok) {
+      setMrpError(mrp.message);
+      setSaved(false);
+      return;
+    }
+    if (mrp?.ok && mrp.paise < price.paise) {
+      setMrpError("MRP cannot be below the selling price.");
+      setSaved(false);
+      return;
+    }
+    setMrpError(undefined);
     setPending(true);
     setError(null);
     setSaved(false);
-    const result = await updateProductPrice(client, productId, price.paise);
+    const result = await updateProductPrice(client, productId, price.paise, mrp?.ok ? mrp.paise : null);
     setPending(false);
     if (!result.ok) {
       if (await redirect(result)) {
@@ -48,7 +64,7 @@ export function PriceEditor({
       return;
     }
     setRupees(paiseToRupeeInput(result.data.inventory.pricePaise));
-    onSaved(result.data.inventory.pricePaise);
+    onSaved(result.data.inventory.pricePaise, result.data.inventory.mrpPaise);
     setSaved(true);
   }
 
@@ -56,7 +72,7 @@ export function PriceEditor({
     <form className="rounded-2xl border border-line bg-white p-5 shadow-card" onSubmit={(event) => void onSubmit(event)}>
       <h2 className="font-display text-lg font-extrabold">Central price</h2>
       <p className="mt-1 text-sm text-muted">Current price {formatPaise(pricePaise)}. This does not change stock.</p>
-      <div className="mt-4 max-w-xs">
+      <div className="mt-4 grid max-w-xl gap-4 sm:grid-cols-2">
         <Field id="price-rupees" label="Price in rupees" error={error ?? undefined} hint="Up to 2 decimal places.">
           <input
             id="price-rupees"
@@ -70,6 +86,9 @@ export function PriceEditor({
               setSaved(false);
             }}
           />
+        </Field>
+        <Field id="price-mrp" label="MRP in rupees" error={mrpError} hint="Optional. Customers see a discount when MRP is above the price.">
+          <input id="price-mrp" inputMode="decimal" value={mrpRupees} aria-invalid={mrpError !== undefined} aria-describedby={describedBy("price-mrp", mrpError, "Optional. Customers see a discount when MRP is above the price.")} className={controlClassName} onChange={(event) => { setMrpRupees(event.target.value); setSaved(false); }} />
         </Field>
       </div>
       <button type="submit" disabled={pending || client === null} className="mt-4 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-60">

@@ -1,6 +1,7 @@
 import type { ProductListQuery } from "@ghartak/contracts";
 import {
   categories,
+  homeDailyTiles,
   imageCleanup,
   productAttributes,
   productImages,
@@ -29,6 +30,7 @@ export type CatalogueProductRow = {
   categoryName: string;
   categorySlug: string;
   pricePaise: number;
+  mrpPaise: number | null;
   stockQuantity: number;
   availability: "available" | "unavailable" | "out_of_stock";
 };
@@ -57,10 +59,24 @@ export function createCatalogueRepository(db: Database) {
           id: categories.id,
           name: categories.name,
           slug: categories.slug,
+          imageDeliveryPath: categories.imageDeliveryPath,
         })
         .from(categories)
         .where(eq(categories.isActive, true))
-        .orderBy(asc(categories.name), asc(categories.id));
+        .orderBy(asc(categories.sortOrder), asc(categories.name), asc(categories.id));
+    },
+
+    async listDailyTiles() {
+      return db
+        .select({
+          position: homeDailyTiles.position,
+          label: homeDailyTiles.label,
+          imageDeliveryPath: homeDailyTiles.imageDeliveryPath,
+          categoryId: sql<string | null>`case when ${categories.isActive} then ${categories.id} end`,
+        })
+        .from(homeDailyTiles)
+        .leftJoin(categories, eq(homeDailyTiles.categoryId, categories.id))
+        .orderBy(asc(homeDailyTiles.position));
     },
 
     async listProducts(query: ProductListQuery): Promise<{ rows: CatalogueProductRow[]; total: number }> {
@@ -197,6 +213,7 @@ function productSelection() {
     categoryName: categories.name,
     categorySlug: categories.slug,
     pricePaise: storeProducts.pricePaise,
+    mrpPaise: storeProducts.mrpPaise,
     stockQuantity: storeProducts.stockQuantity,
     availability: storeProducts.availability,
   };
@@ -234,6 +251,7 @@ function normalizeProduct(row: {
   categoryName: string;
   categorySlug: string;
   pricePaise: number;
+  mrpPaise: number | null;
   stockQuantity: number;
   availability: CatalogueProductRow["availability"];
 }): CatalogueProductRow {
@@ -241,6 +259,7 @@ function normalizeProduct(row: {
     ...row,
     packageSize: numberValue(row.packageSize),
     pricePaise: numberValue(row.pricePaise),
+    mrpPaise: row.mrpPaise === null ? null : numberValue(row.mrpPaise),
     stockQuantity: numberValue(row.stockQuantity),
   };
 }

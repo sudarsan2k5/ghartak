@@ -22,7 +22,11 @@ A product with availability `out_of_stock` stays visible. Its `stock.purchasable
 
 ## GET /api/v1/categories
 
-Returns active categories ordered by name, then id. Categories have no image column and no display-order column, so the response does not include either.
+Returns active categories in the admin-set display order, then by name and id. Each category includes `imageDeliveryPath`, which is `null` when no front image has been uploaded.
+
+## GET /api/v1/home/daily-tiles
+
+Returns the four "Your daily everything" boxes ordered by `position`, each with `label`, `imageDeliveryPath`, and `categoryId`. `categoryId` is `null` when the box has no linked category or its category is inactive; the app then opens the full category list.
 
 ```json
 {

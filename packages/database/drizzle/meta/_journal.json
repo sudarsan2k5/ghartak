@@ -71,6 +71,20 @@
       "when": 1793401000000,
       "tag": "0009_image_cleanup_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793402000000,
+      "tag": "0010_home_daily_tiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793403000000,
+      "tag": "0011_category_order_and_mrp",
+      "breakpoints": true
     }
   ]
 }

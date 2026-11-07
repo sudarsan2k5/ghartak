@@ -22,6 +22,10 @@ export function createCatalogueService(db: Database) {
       return { categories };
     },
 
+    async listDailyTiles() {
+      return { tiles: await repository.listDailyTiles() };
+    },
+
     async listProducts(query: ProductListQuery): Promise<ProductListResponse> {
       const { rows, total } = await repository.listProducts(query);
       const images = await repository.listPrimaryImages(rows.map((row) => row.id));
@@ -76,6 +80,7 @@ function toSummary(product: CatalogueProductRow, primaryImage: CatalogueImage | 
     packageSize: product.packageSize,
     packageLabel: product.packageLabel,
     pricePaise: product.pricePaise,
+    mrpPaise: product.mrpPaise !== null && product.mrpPaise > product.pricePaise ? product.mrpPaise : null,
     stock: toStock(product.stockQuantity, product.availability),
     primaryImage,
   };

@@ -14,3 +14,9 @@ export function placeholderLocation(): PlaceholderLocation {
     line: line && line.length > 0 ? line : defaultLine,
   };
 }
+
+export function locationSubtitle(location: PlaceholderLocation, eta?: string): string {
+  const place = `${location.label}, ${location.line}`;
+  const trimmed = eta?.trim();
+  return trimmed ? `${trimmed} · ${place}` : place;
+}

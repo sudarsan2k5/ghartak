@@ -1,8 +1,10 @@
 import type { AdminProductCreate, AdminProductListQuery, AdminProductUpdate } from "@ghartak/contracts";
 import {
   categories,
+  imageCleanup,
   inventoryMovements,
   productAttributes,
+  productImages,
   products,
   storeProducts,
   stores,
@@ -10,7 +12,7 @@ import {
   type Database,
   type DatabaseTransaction,
 } from "@ghartak/database";
-import { and, asc, eq, sql, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { HttpError, isUniqueViolation } from "../../../http/errors.js";
 import { listAdminImages } from "../images/image.service.js";
 
@@ -31,6 +33,7 @@ type ProductDetail = {
   isActive: boolean;
   inventory: {
     pricePaise: number;
+    mrpPaise: number | null;
     stockQuantity: number;
     availability: "available" | "unavailable" | "out_of_stock";
   };
@@ -71,6 +74,7 @@ export function createAdminProductService(db: Database) {
           publicationStatus: products.publicationStatus,
           isActive: products.isActive,
           pricePaise: storeProducts.pricePaise,
+          mrpPaise: storeProducts.mrpPaise,
           stockQuantity: storeProducts.stockQuantity,
           availability: storeProducts.availability,
         })
@@ -81,8 +85,27 @@ export function createAdminProductService(db: Database) {
         .orderBy(asc(products.name), asc(products.id))
         .limit(query.limit)
         .offset((query.page - 1) * query.limit);
+      const primaryImages = rows.length
+        ? await db
+            .select({ productId: productImages.productId, deliveryPath: productImages.deliveryPath })
+            .from(productImages)
+            .where(
+              and(
+                inArray(productImages.productId, rows.map((row) => row.id)),
+                eq(productImages.isPrimary, true),
+                sql`not exists (
+                  select 1 from ${imageCleanup}
+                  where ${imageCleanup.imageId} = ${productImages.id}
+                    and ${imageCleanup.operation} = 'delete'
+                    and ${imageCleanup.status} = 'pending_delete'
+                )`,
+              ),
+            )
+        : [];
+      const imageByProduct = new Map(primaryImages.map((image) => [image.productId, image.deliveryPath]));
       return {
         products: rows.map((row) => ({
+          primaryImagePath: imageByProduct.get(row.id) ?? null,
           id: row.id,
           name: row.name,
           brand: row.brand,
@@ -95,6 +118,7 @@ export function createAdminProductService(db: Database) {
           isActive: row.isActive,
           inventory: {
             pricePaise: row.pricePaise,
+      mrpPaise: row.mrpPaise,
             stockQuantity: row.stockQuantity,
             availability: row.availability,
           },
@@ -142,6 +166,7 @@ export function createAdminProductService(db: Database) {
               storeId: await fulfilmentId(tx),
               productId: product.id,
               pricePaise: input.pricePaise,
+              mrpPaise: input.mrpPaise ?? null,
               stockQuantity: input.openingStockQuantity,
               availability: input.openingStockQuantity > 0 ? "available" : "out_of_stock",
             })
@@ -247,6 +272,7 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
       publicationStatus: products.publicationStatus,
       isActive: products.isActive,
       pricePaise: storeProducts.pricePaise,
+      mrpPaise: storeProducts.mrpPaise,
       stockQuantity: storeProducts.stockQuantity,
       availability: storeProducts.availability,
     })
@@ -283,6 +309,7 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
     isActive: row.isActive,
     inventory: {
       pricePaise: row.pricePaise,
+            mrpPaise: row.mrpPaise,
       stockQuantity: row.stockQuantity,
       availability: row.availability,
     },
