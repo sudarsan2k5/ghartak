@@ -244,10 +244,30 @@ function cleanAttributes(attributes: AttributeDraft[], errors: FieldErrors): Att
   return cleaned;
 }
 
+export function errorSummary(errors: FieldErrors): string {
+  const count = Object.keys(errors).length;
+  if (count === 1) {
+    return `Product not saved. ${Object.values(errors)[0]}`;
+  }
+  return `Product not saved. Fix the ${count} problems marked in red.`;
+}
+
+// Schema paths name the API payload, so point them at the inputs that can show the error.
+const payloadFields: Record<string, string> = {
+  pricePaise: "priceRupees",
+  mrpPaise: "mrpRupees",
+  openingStockQuantity: "openingStock",
+};
+
+function fieldKey(path: PropertyKey[]): string {
+  const key = path.map((part) => String(part)).join(".") || "form";
+  return payloadFields[key] ?? key.match(/^attributes\.\d+/)?.[0] ?? key;
+}
+
 function issuesToErrors(issues: Array<{ path: PropertyKey[]; message: string }>): FieldErrors {
   const errors: FieldErrors = {};
   for (const issue of issues) {
-    const key = issue.path.map((part) => String(part)).join(".") || "form";
+    const key = fieldKey(issue.path);
     if (errors[key] === undefined) {
       errors[key] = friendlyMessage(key, issue.message);
     }

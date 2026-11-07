@@ -4,7 +4,7 @@ import { adminPriceResponseSchema, adminProductListResponseSchema, adminProductS
 import { createApiClient, failureFromResponse } from "../src/lib/api/client";
 import { redirectForFailure } from "../src/lib/auth/session";
 import { archiveConfirmed, productListView } from "../src/lib/products/list-state";
-import { emptyProductDraft, validateCreate, validateUpdate, type LoadedProduct } from "../src/lib/products/form";
+import { emptyProductDraft, errorSummary, validateCreate, validateUpdate, type LoadedProduct } from "../src/lib/products/form";
 import { resolveProductImage } from "../src/lib/products/images";
 import { paiseToRupeeInput, rupeesToPaise } from "../src/lib/products/money";
 import { filtersFromSearchParams, productListPath, productPageSize } from "../src/lib/products/query";
@@ -366,3 +366,37 @@ function draftFrom(product: LoadedProduct) {
     openingStock: "40",
   };
 }
+
+describe("product form save feedback", () => {
+  const ready = {
+    ...emptyProductDraft(),
+    name: "Face wash",
+    sku: "FACE-WASH",
+    categoryId: "10000000-0000-4000-8000-000000000021",
+    unit: "piece",
+    packageSize: "1",
+    packageLabel: "1 piece",
+    priceRupees: "100",
+  };
+
+  it("reports a letter barcode on the barcode field and in the summary", () => {
+    const result = validateCreate({ ...ready, barcode: "ABC-abc-1234" });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.deepEqual(Object.keys(result.errors), ["barcode"]);
+      assert.equal(errorSummary(result.errors), "Product not saved. Use 8 to 14 digits, or leave the barcode empty.");
+    }
+  });
+
+  it("puts duplicate attribute errors on a row the form renders", () => {
+    const result = validateCreate({ ...ready, attributes: [{ name: "Size", value: "S" }, { name: "Size", value: "M" }] });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.ok(Object.keys(result.errors).every((key) => key === "attributes" || /^attributes\.\d+$/.test(key)), Object.keys(result.errors).join());
+    }
+  });
+
+  it("counts several problems in the summary", () => {
+    assert.equal(errorSummary({ name: "a", sku: "b" }), "Product not saved. Fix the 2 problems marked in red.");
+  });
+});

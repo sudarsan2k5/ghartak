@@ -3,7 +3,7 @@
 import { productUnitValues } from "@ghartak/contracts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { controlClassName, describedBy, Field } from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ImagePicker } from "@/components/ui/image-picker";
@@ -11,6 +11,7 @@ import { useAuthRedirect } from "@/features/auth/use-auth-redirect";
 import { useSession } from "@/features/auth/session-provider";
 import {
   emptyProductDraft,
+  errorSummary,
   restoreDraftPayload,
   validateCreate,
   validateUpdate,
@@ -48,6 +49,7 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!client) {
@@ -122,6 +124,22 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
   function update<K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
     setSaved(false);
+    setFormError(null);
+    setErrors((current) => {
+      const next = Object.fromEntries(
+        Object.entries(current).filter(([field]) => field !== key && !(key === "attributes" && field.startsWith("attributes"))),
+      );
+      return Object.keys(next).length === Object.keys(current).length ? current : next;
+    });
+  }
+
+  // The save button sits below most fields, so a failed save must take the admin to the problem.
+  function showValidationErrors(fieldErrors: Record<string, string>) {
+    setErrors(fieldErrors);
+    setFormError(errorSummary(fieldErrors));
+    requestAnimationFrame(() => {
+      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    });
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -134,7 +152,7 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
     if (mode === "create") {
       const parsed = validateCreate(draft);
       if (!parsed.ok) {
-        setErrors(parsed.errors);
+        showValidationErrors(parsed.errors);
         return;
       }
       setErrors({});
@@ -169,7 +187,7 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
     }
     const parsed = validateUpdate(original, draft);
     if (!parsed.ok) {
-      setErrors(parsed.errors);
+      showValidationErrors(parsed.errors);
       return;
     }
     setErrors({});
@@ -232,16 +250,11 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
   const archived = original?.publicationStatus === "archived";
 
   return (
-    <form className="max-w-3xl space-y-6" onSubmit={(event) => void onSubmit(event)} noValidate>
+    <form ref={formRef} className="max-w-3xl space-y-6" onSubmit={(event) => void onSubmit(event)} noValidate>
       {fixedCategoryId || original ? (
         <Link href={`/categories/${fixedCategoryId ?? original?.categoryId}`} className="text-sm font-medium text-secondary underline">
           ← {categories.find((category) => category.id === (fixedCategoryId ?? original?.categoryId))?.name ?? "Category"}
         </Link>
-      ) : null}
-      {formError ? (
-        <p className="rounded-xl border border-line bg-wash px-4 py-3 text-sm" role="alert">
-          {formError}
-        </p>
       ) : null}
       {mode === "create" ? (
         <p className="text-sm text-secondary">Price and opening stock create the one central listing.</p>
@@ -377,17 +390,22 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
         <ul className="mt-4 space-y-3">
           {draft.attributes.map((attribute, index) => (
             <li key={index} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-              <input aria-label={`Attribute ${index + 1} name`} value={attribute.name} className={controlClassName} onChange={(event) => update("attributes", draft.attributes.map((row, rowIndex) => rowIndex === index ? { ...row, name: event.target.value } : row))} />
-              <input aria-label={`Attribute ${index + 1} value`} value={attribute.value} className={controlClassName} onChange={(event) => update("attributes", draft.attributes.map((row, rowIndex) => rowIndex === index ? { ...row, value: event.target.value } : row))} />
+              <input aria-label={`Attribute ${index + 1} name`} aria-invalid={errors[`attributes.${index}`] !== undefined} value={attribute.name} className={controlClassName} onChange={(event) => update("attributes", draft.attributes.map((row, rowIndex) => rowIndex === index ? { ...row, name: event.target.value } : row))} />
+              <input aria-label={`Attribute ${index + 1} value`} aria-invalid={errors[`attributes.${index}`] !== undefined} value={attribute.value} className={controlClassName} onChange={(event) => update("attributes", draft.attributes.map((row, rowIndex) => rowIndex === index ? { ...row, value: event.target.value } : row))} />
               <button type="button" className="rounded-xl px-3 py-2 text-sm text-secondary" onClick={() => update("attributes", draft.attributes.filter((_, rowIndex) => rowIndex !== index))}>
                 Remove
               </button>
-              {errors[`attributes.${index}`] ? <p className="text-sm text-secondary md:col-span-3">{errors[`attributes.${index}`]}</p> : null}
+              {errors[`attributes.${index}`] ? <p className="text-sm font-medium text-danger md:col-span-3">{errors[`attributes.${index}`]}</p> : null}
             </li>
           ))}
         </ul>
-        {errors["attributes"] ? <p className="mt-3 text-sm text-secondary">{errors["attributes"]}</p> : null}
+        {errors["attributes"] ? <p className="mt-3 text-sm font-medium text-danger">{errors["attributes"]}</p> : null}
       </section>
+      {formError ? (
+        <p className="rounded-xl border border-danger bg-wash px-4 py-3 text-sm font-medium text-danger" role="alert">
+          {formError}
+        </p>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row">
         <button type="submit" disabled={pending || client === null} className="rounded-xl bg-lime px-4 py-3 font-display text-sm font-semibold text-ink disabled:opacity-60">
           {pending ? "Saving" : mode === "create" && draft.publicationStatus !== "published" ? "Create draft" : "Save product"}

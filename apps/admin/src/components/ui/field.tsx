@@ -25,7 +25,7 @@ export function Field({
         </p>
       ) : null}
       {error ? (
-        <p id={`${id}-error`} className="mt-2 text-sm text-secondary">
+        <p id={`${id}-error`} className="mt-2 text-sm font-medium text-danger">
           {error}
         </p>
       ) : null}
@@ -34,7 +34,7 @@ export function Field({
 }
 
 export const controlClassName =
-  "w-full rounded-xl border border-line bg-white px-4 py-3 text-ink aria-[invalid=true]:border-ink";
+  "w-full rounded-xl border border-line bg-white px-4 py-3 text-ink scroll-mt-28 aria-[invalid=true]:border-danger";
 
 export function describedBy(id: string, error: string | undefined, hint?: string): string | undefined {
   if (error) {
