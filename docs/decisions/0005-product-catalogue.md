@@ -19,3 +19,7 @@ Product photos will eventually live in Cloudflare R2. This schema stores image m
 ## Consequences
 
 Migration `0002_product_catalogue` refuses to drop `products.image_url` if any value is present. Catalogue APIs, the admin dashboard, and the R2 bucket are still later work. The customer app continues to use its local presentation images until those APIs exist.
+
+## Later change
+
+Migration `0012_remove_sku_barcode_attributes` removed `products.sku`, `products.barcode`, `order_items.sku`, and the `product_attributes` table. Products are identified by id only, and the parts of this decision that describe those fields no longer apply.

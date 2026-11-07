@@ -5,6 +5,7 @@ import { createApiClient, failureFromResponse } from "../src/lib/api/client";
 import { redirectForFailure } from "../src/lib/auth/session";
 import { archiveConfirmed, productListView } from "../src/lib/products/list-state";
 import { emptyProductDraft, errorSummary, validateCreate, validateUpdate, type LoadedProduct } from "../src/lib/products/form";
+import { addImageFiles, maxProductImages, moveImageToFront } from "../src/lib/products/image-selection";
 import { resolveProductImage } from "../src/lib/products/images";
 import { paiseToRupeeInput, rupeesToPaise } from "../src/lib/products/money";
 import { filtersFromSearchParams, productListPath, productPageSize } from "../src/lib/products/query";
@@ -89,27 +90,10 @@ describe("product mutations", () => {
     assert.equal(missing.ok, false);
     if (!missing.ok) {
       assert.equal(missing.errors["openingReason"], "Opening stock requires a reason.");
-      assert.equal(missing.errors["sku"], "Use uppercase letters, numbers, and single hyphens.");
     }
-    const created = validateCreate({
-      ...emptyProductDraft(),
-      name: "Jaggery",
-      sku: "jaggery-1kg",
-      categoryId,
-      unit: "kg",
-      packageSize: "1",
-      packageLabel: "1 kg",
-      priceRupees: "56.50",
-      openingStock: "4",
-      openingReason: "Opening count",
-      brand: "",
-      barcode: "",
-    });
-    assert.equal(created.ok, false);
     const ready = validateCreate({
       ...emptyProductDraft(),
       name: "Jaggery",
-      sku: "JAGGERY-1KG",
       categoryId,
       unit: "kg",
       packageSize: "1",
@@ -187,9 +171,9 @@ describe("product mutations", () => {
   });
 
   it("reports conflicts and unavailable catalogue calls without a stack trace", () => {
-    const conflict = failureFromResponse(409, { error: { code: "request_error", message: "A product with that SKU already exists" } });
+    const conflict = failureFromResponse(409, { error: { code: "request_error", message: "That value is already in use" } });
     assert.equal(conflict.kind, "conflict");
-    assert.equal(conflict.message, "A product with that SKU already exists");
+    assert.equal(conflict.message, "That value is already in use");
     const unavailable = failureFromResponse(503, { error: { code: "request_error", message: "Error\n    at hidden" } });
     assert.equal(unavailable.kind, "unavailable");
     assert.equal(unavailable.message.includes("hidden"), false);
@@ -308,7 +292,6 @@ function summary() {
     ...detail(),
     description: undefined,
     packageSize: undefined,
-    attributes: undefined,
     images: undefined,
   };
 }
@@ -318,8 +301,6 @@ function detail() {
     id: productId,
     name: "Toor Dal",
     brand: "Ghartak",
-    sku: "DAL-TOOR-1KG",
-    barcode: null,
     description: "Split pigeon peas",
     category: { id: categoryId, name: "Staples", slug: "staples" },
     unit: "kg",
@@ -328,7 +309,6 @@ function detail() {
     publicationStatus: "published",
     isActive: true,
     inventory: { pricePaise: 12000, stockQuantity: 40, availability: "available" },
-    attributes: [{ name: "Diet", value: "Vegetarian", position: 0 }],
     images: [
       {
         id: "00000000-0000-4000-8000-000000000081",
@@ -344,15 +324,12 @@ function detail() {
 function loaded(): LoadedProduct {
   return {
     name: "Toor Dal",
-    sku: "DAL-TOOR-1KG",
     categoryId,
     unit: "kg",
     packageSize: "1",
     packageLabel: "1 kg",
     brand: "Ghartak",
-    barcode: "",
     description: "Split pigeon peas",
-    attributes: [{ name: "Diet", value: "Vegetarian" }],
     publicationStatus: "published",
     isActive: true,
   };
@@ -368,35 +345,53 @@ function draftFrom(product: LoadedProduct) {
 }
 
 describe("product form save feedback", () => {
-  const ready = {
-    ...emptyProductDraft(),
-    name: "Face wash",
-    sku: "FACE-WASH",
-    categoryId: "10000000-0000-4000-8000-000000000021",
-    unit: "piece",
-    packageSize: "1",
-    packageLabel: "1 piece",
-    priceRupees: "100",
-  };
-
-  it("reports a letter barcode on the barcode field and in the summary", () => {
-    const result = validateCreate({ ...ready, barcode: "ABC-abc-1234" });
+  it("names a single problem in the summary", () => {
+    const result = validateUpdate(loaded(), { ...draftFrom(loaded()), name: " " });
     assert.equal(result.ok, false);
     if (!result.ok) {
-      assert.deepEqual(Object.keys(result.errors), ["barcode"]);
-      assert.equal(errorSummary(result.errors), "Product not saved. Use 8 to 14 digits, or leave the barcode empty.");
-    }
-  });
-
-  it("puts duplicate attribute errors on a row the form renders", () => {
-    const result = validateCreate({ ...ready, attributes: [{ name: "Size", value: "S" }, { name: "Size", value: "M" }] });
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.ok(Object.keys(result.errors).every((key) => key === "attributes" || /^attributes\.\d+$/.test(key)), Object.keys(result.errors).join());
+      assert.deepEqual(Object.keys(result.errors), ["name"]);
+      assert.equal(errorSummary(result.errors), "Product not saved. Enter a product name.");
     }
   });
 
   it("counts several problems in the summary", () => {
-    assert.equal(errorSummary({ name: "a", sku: "b" }), "Product not saved. Fix the 2 problems marked in red.");
+    assert.equal(errorSummary({ name: "a", unit: "b" }), "Product not saved. Fix the 2 problems marked in red.");
+  });
+});
+
+describe("add product form", () => {
+  const ready = { ...emptyProductDraft(), name: "Face wash", categoryId, unit: "piece", packageSize: "1", packageLabel: "1 piece", priceRupees: "100" };
+
+  it("accepts a product with only the required fields", () => {
+    assert.equal(validateCreate(ready).ok, true);
+  });
+});
+
+describe("product image selection", () => {
+  const image = (name: string, size = 100, type = "image/jpeg") => ({ name, size, type });
+
+  it("adds several images in order after the ones already chosen", () => {
+    const result = addImageFiles([image("a.jpg")], [image("b.png", 100, "image/png"), image("c.webp", 100, "image/webp")]);
+    assert.deepEqual(result.files.map((file) => file.name), ["a.jpg", "b.png", "c.webp"]);
+    assert.equal(result.error, null);
+  });
+
+  it("keeps valid images and names the ones it refused", () => {
+    const result = addImageFiles([], [image("ok.jpg"), image("doc.pdf", 100, "application/pdf"), image("big.jpg", 5 * 1024 * 1024 + 1)]);
+    assert.deepEqual(result.files.map((file) => file.name), ["ok.jpg"]);
+    assert.match(result.error ?? "", /doc\.pdf/);
+    assert.match(result.error ?? "", /big\.jpg/);
+  });
+
+  it("stops at the image limit", () => {
+    const full = Array.from({ length: maxProductImages }, (_, index) => image(`${index}.jpg`));
+    const result = addImageFiles(full, [image("extra.jpg")]);
+    assert.equal(result.files.length, maxProductImages);
+    assert.match(result.error ?? "", /up to 20/);
+  });
+
+  it("moves a chosen image to the cover position", () => {
+    assert.deepEqual(moveImageToFront(["a", "b", "c"], 2), ["c", "a", "b"]);
+    assert.deepEqual(moveImageToFront(["a", "b"], 0), ["a", "b"]);
   });
 });

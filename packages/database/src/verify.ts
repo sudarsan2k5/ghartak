@@ -52,7 +52,6 @@ import {
   paymentMethodEnum,
   paymentStatusEnum,
   payments,
-  productAttributes,
   productImages,
   productPublicationStatusEnum,
   productUnitEnum,
@@ -92,7 +91,6 @@ const expectedTables = [
   "stores",
   "categories",
   "products",
-  "product_attributes",
   "product_images",
   "store_products",
   "inventory_movements",
@@ -394,17 +392,16 @@ async function main(): Promise<void> {
           orderId,
           productId: sampleProductIds.dal,
           productName: "Toor Dal",
-          sku: "SAMPLE-DAL-TOOR",
           quantity: 2,
           unitPricePaise: 12000,
           lineTotalPaise: 24000,
         });
         await tx.update(products).set({ name: "Renamed Dal" }).where(eq(products.id, sampleProductIds.dal));
         const [item] = await tx
-          .select({ productName: orderItems.productName, sku: orderItems.sku, quantity: orderItems.quantity })
+          .select({ productName: orderItems.productName, quantity: orderItems.quantity })
           .from(orderItems)
           .where(eq(orderItems.id, itemId));
-        if (!item || item.productName !== "Toor Dal" || item.sku !== "SAMPLE-DAL-TOOR" || item.quantity !== 2) {
+        if (!item || item.productName !== "Toor Dal" || item.quantity !== 2) {
           throw new Error("order item snapshot changed");
         }
       }),
@@ -530,14 +527,13 @@ async function main(): Promise<void> {
         });
       }),
     );
-    await check(results, "deleting a product removes its image and attribute records", () =>
+    await check(results, "deleting a product removes its image records", () =>
       rollbackAfter(db, async (tx) => {
         const productId = randomUUID();
         await tx.insert(products).values({
           id: productId,
           categoryId: seedIds.staples,
           name: "Temporary Product",
-          sku: `TEMP-${productId.replaceAll("-", "").slice(0, 8).toUpperCase()}`,
           unit: "piece",
           packageSize: 1,
           packageLabel: "1 pc",
@@ -553,16 +549,7 @@ async function main(): Promise<void> {
             isPrimary: true,
           })
           .returning({ id: productImages.id });
-        const [attribute] = await tx
-          .insert(productAttributes)
-          .values({
-            productId,
-            name: "Note",
-            value: "Temporary",
-            position: 0,
-          })
-          .returning({ id: productAttributes.id });
-        if (!image || !attribute) {
+        if (!image) {
           throw new Error("temporary catalogue rows were not stored");
         }
         await tx.delete(products).where(eq(products.id, productId));
@@ -570,50 +557,9 @@ async function main(): Promise<void> {
           .select({ id: productImages.id })
           .from(productImages)
           .where(eq(productImages.id, image.id));
-        const attributes = await tx
-          .select({ id: productAttributes.id })
-          .from(productAttributes)
-          .where(eq(productAttributes.id, attribute.id));
-        if (images.length !== 0 || attributes.length !== 0) {
+        if (images.length !== 0) {
           throw new Error("catalogue metadata survived product delete");
         }
-      }),
-    );
-    await check(results, "duplicate barcode is rejected", () =>
-      expectSqlState(
-        () =>
-          db.insert(products).values({
-            categoryId: seedIds.staples,
-            name: "Duplicate Barcode",
-            sku: "TEMP-BARCODE",
-            barcode: "8901000000031",
-            unit: "kg",
-            packageSize: 1,
-            packageLabel: "1 kg",
-          }),
-        "23505",
-      ),
-    );
-    await check(results, "barcode stays optional", () =>
-      rollbackAfter(db, async (tx) => {
-        await tx.insert(products).values([
-          {
-            categoryId: seedIds.produce,
-            name: "Loose Mint",
-            sku: "TEMP-MINT",
-            unit: "g",
-            packageSize: 100,
-            packageLabel: "100 g",
-          },
-          {
-            categoryId: seedIds.produce,
-            name: "Loose Coriander",
-            sku: "TEMP-CORIANDER",
-            unit: "g",
-            packageSize: 100,
-            packageLabel: "100 g",
-          },
-        ]);
       }),
     );
     await check(results, "guest COD order can omit a customer account", () =>
@@ -625,7 +571,6 @@ async function main(): Promise<void> {
           orderId,
           productId: sampleProductIds.dal,
           productName: "Toor Dal",
-          sku: "SAMPLE-DAL-TOOR",
           quantity: 1,
           unitPricePaise: 12000,
           lineTotalPaise: 12000,
@@ -713,7 +658,6 @@ async function assertForeignKeys(db: Database): Promise<void> {
   expectDelete(keys, "order_status_events", "order_id", "r");
   expectDelete(keys, "inventory_movements", "store_product_id", "r");
   expectDelete(keys, "product_images", "product_id", "c");
-  expectDelete(keys, "product_attributes", "product_id", "c");
   expectDelete(keys, "cart_items", "cart_id", "c");
   expectDelete(keys, "user_addresses", "user_id", "c");
   expectDelete(keys, "admin_sessions", "user_id", "c");
@@ -968,7 +912,6 @@ async function assertCommittedOrder(db: Database): Promise<void> {
         orderId,
         productId: sampleProductIds.dal,
         productName: "Toor Dal",
-        sku: "SAMPLE-DAL-TOOR",
         quantity: 1,
         unitPricePaise: 12000,
         lineTotalPaise: 12000,

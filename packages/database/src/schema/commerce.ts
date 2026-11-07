@@ -149,7 +149,6 @@ export const orderItems = pgTable(
       .notNull()
       .references(() => products.id, { onDelete: "restrict" }),
     productName: text("product_name").notNull(),
-    sku: text("sku").notNull(),
     quantity: integer("quantity").notNull(),
     unitPricePaise: integer("unit_price_paise").notNull(),
     lineTotalPaise: integer("line_total_paise").notNull(),

@@ -25,7 +25,6 @@ import { createImageStorage, type ImageStorage } from "../src/modules/admin/imag
 import { createLogger } from "../src/logger.js";
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 8);
-const sku = `R2LIVE-${suffix.toUpperCase()}`;
 const jpeg = Uint8Array.from([0xff, 0xd8, 0xff, 0xd9]);
 
 let db: Database;
@@ -110,7 +109,6 @@ describe("controlled live R2 image cycle", () => {
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: `R2 Live ${suffix}`,
-        sku,
         categoryId: (category.json() as { id: string }).id,
         unit: "piece",
         packageSize: 1,
@@ -203,7 +201,7 @@ describe("controlled live R2 image cycle", () => {
 });
 
 async function cleanup(database: Database): Promise<void> {
-  const productRows = await database.select({ id: products.id }).from(products).where(like(products.sku, "R2LIVE-%"));
+  const productRows = await database.select({ id: products.id }).from(products).where(like(products.name, `R2 Live ${suffix}`));
   for (const row of productRows) {
     await database.delete(imageCleanup).where(eq(imageCleanup.productId, row.id));
     await database.delete(imageCleanupArchive).where(eq(imageCleanupArchive.productId, row.id));

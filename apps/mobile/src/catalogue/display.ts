@@ -58,3 +58,10 @@ export const sortOptions = [
   { value: "price_desc", label: "Price: high to low" },
   { value: "newest", label: "Newest" },
 ] as const;
+
+export function galleryIndexFromOffset(offsetX: number, pageWidth: number, imageCount: number): number {
+  if (pageWidth <= 0 || imageCount <= 0) {
+    return 0;
+  }
+  return Math.min(imageCount - 1, Math.max(0, Math.round(offsetX / pageWidth)));
+}

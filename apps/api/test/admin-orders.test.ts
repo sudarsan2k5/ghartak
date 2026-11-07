@@ -36,7 +36,6 @@ import { createAdministrator } from "../src/modules/admin/auth/accounts.js";
 import { createAdminOrderService } from "../src/modules/admin/orders/order.service.js";
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
-const skuPrefix = `ORD-${suffix}`;
 const password = "correct-horse-battery";
 const adminEmail = `ord-admin-${suffix.toLowerCase()}@example.com`;
 
@@ -555,7 +554,6 @@ async function insertCatalogue(database: Database, fulfilmentId: string) {
       id: productId,
       categoryId,
       name: `Ord One ${suffix}`,
-      sku: `${skuPrefix}-ONE`,
       unit: "piece",
       packageSize: 1,
       packageLabel: "1 pc",
@@ -566,7 +564,6 @@ async function insertCatalogue(database: Database, fulfilmentId: string) {
       id: secondProductId,
       categoryId,
       name: `Ord Two ${suffix}`,
-      sku: `${skuPrefix}-TWO`,
       unit: "piece",
       packageSize: 1,
       packageLabel: "1 pc",
@@ -630,12 +627,11 @@ async function insertRegisteredOrder(
     if (!order) {
       throw new Error("registered order was not stored");
     }
-    const [product] = await tx.select({ name: products.name, sku: products.sku }).from(products).where(eq(products.id, input.productId));
+    const [product] = await tx.select({ name: products.name }).from(products).where(eq(products.id, input.productId));
     await tx.insert(orderItems).values({
       orderId: order.id,
       productId: input.productId,
       productName: product?.name ?? "Registered item",
-      sku: product?.sku ?? `${skuPrefix}-ONE`,
       quantity: input.quantity,
       unitPricePaise: input.unitPricePaise,
       lineTotalPaise,
@@ -686,7 +682,7 @@ async function cleanup(database: Database): Promise<void> {
   const productRows = await database
     .select({ id: products.id })
     .from(products)
-    .where(like(products.sku, `${skuPrefix}-%`));
+    .where(like(products.name, `Ord % ${suffix}`));
   const productIds = productRows.map((row) => row.id);
   if (productIds.length > 0) {
     const itemRows = await database

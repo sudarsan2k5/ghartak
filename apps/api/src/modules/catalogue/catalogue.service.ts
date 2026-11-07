@@ -46,20 +46,12 @@ export function createCatalogueService(db: Database) {
       if (!product) {
         return null;
       }
-      const [images, attributes] = await Promise.all([
-        repository.listImages(productId),
-        repository.listAttributes(productId),
-      ]);
+      const images = await repository.listImages(productId);
       const gallery = images.map(toImage);
       return {
         ...toSummary(product, gallery.find((image) => image.isPrimary) ?? null),
         description: product.description,
         images: gallery,
-        attributes: attributes.map((attribute) => ({
-          name: attribute.name,
-          value: attribute.value,
-          position: attribute.position,
-        })),
       };
     },
   };

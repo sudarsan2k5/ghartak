@@ -11,7 +11,6 @@ import {
   categories,
   closeDatabase,
   openDatabase,
-  productAttributes,
   productImages,
   products,
   storeProducts,
@@ -106,9 +105,9 @@ describe("customer catalogue", () => {
     assert.equal(body.pagination.total, body.products.length);
   });
 
-  it("returns product details with images and attributes", async () => {
+  it("returns product details with images", async () => {
     const listed = productListResponseSchema.parse(
-      await getJson(app, "/api/v1/products?search=SAMPLE-DAL-TOOR&limit=10"),
+      await getJson(app, "/api/v1/products?search=Toor%20Dal&limit=10"),
     );
     const dal = listed.products.find((product) => product.name === "Toor Dal");
     assert.ok(dal);
@@ -124,7 +123,6 @@ describe("customer catalogue", () => {
     );
     assert.equal(detail.images.filter((image) => image.isPrimary).length, 1);
     assert.equal(detail.primaryImage?.isPrimary, true);
-    assert.equal(detail.attributes[0]?.name, "Variety");
     assert.equal("objectKey" in (detail.images[0] ?? {}), false);
     assert.equal("storageProvider" in (detail.images[0] ?? {}), false);
     assert.equal(detail.images[0]?.deliveryPath, "/catalog/toor-dal/primary.jpg");
@@ -142,7 +140,7 @@ describe("customer catalogue", () => {
     );
   });
 
-  it("searches name, brand, and sku without case sensitivity", async () => {
+  it("searches name and brand without case sensitivity", async () => {
     const byName = productListResponseSchema.parse(await getJson(app, "/api/v1/products?search=toned%20milk"));
     assert.ok(byName.products.some((product) => product.name === "Toned Milk"));
     const byBrand = productListResponseSchema.parse(await getJson(app, `/api/v1/products?search=zephyr%20${slugSuffix}`));
@@ -150,8 +148,6 @@ describe("customer catalogue", () => {
       byBrand.products.map((product) => product.id),
       [fixture.brandId],
     );
-    const bySku = productListResponseSchema.parse(await getJson(app, "/api/v1/products?search=sample-atta"));
-    assert.ok(bySku.products.some((product) => product.name === "Wheat Atta"));
     const blank = productListResponseSchema.parse(await getJson(app, "/api/v1/products?search=%20%20&limit=50"));
     assert.equal(blank.pagination.total, 9);
   });
@@ -219,7 +215,7 @@ describe("customer catalogue", () => {
     }
   });
 
-  it("returns gallery order, one primary image, and ordered attributes", async () => {
+  it("returns gallery order and one primary image", async () => {
     const detail = productDetailResponseSchema.parse(
       await getJson(app, `/api/v1/products/${fixture.publishedId}`),
     );
@@ -228,11 +224,6 @@ describe("customer catalogue", () => {
       [fixture.primaryImageId, fixture.secondaryImageId],
     );
     assert.equal(detail.images.filter((image) => image.isPrimary).length, 1);
-    assert.deepEqual(
-      detail.attributes.map((attribute) => attribute.position),
-      [0, 1],
-    );
-    assert.equal(detail.attributes[0]?.value, "First");
   });
 
   it("rejects invalid queries and ids", async () => {
@@ -261,11 +252,10 @@ describe("customer catalogue", () => {
     assert.equal(errorResponseSchema.parse(missing.json()).error.code, "not_found");
   });
 
-  it("returns products that have no images or attributes", async () => {
+  it("returns products that have no images", async () => {
     const detail = productDetailResponseSchema.parse(await getJson(app, `/api/v1/products/${fixture.plainId}`));
     assert.equal(detail.primaryImage, null);
     assert.deepEqual(detail.images, []);
-    assert.deepEqual(detail.attributes, []);
     assert.equal(detail.brand, null);
   });
 
@@ -313,15 +303,15 @@ async function insertFixtures(database: Database, fulfilmentId: string): Promise
     },
   ]);
   await database.insert(products).values([
-    product(ids.publishedId, ids.activeCategoryId, `Test Published ${suffix}`, `TEST-PUB-${suffix}`, "published", true, "Visible Brand"),
-    product(ids.draftId, ids.activeCategoryId, `Test Draft ${suffix}`, `TEST-DRAFT-${suffix}`, "draft", true, null),
-    product(ids.archivedId, ids.activeCategoryId, `Test Archived ${suffix}`, `TEST-ARCH-${suffix}`, "archived", true, null),
-    product(ids.inactiveProductId, ids.activeCategoryId, `Test Inactive Product ${suffix}`, `TEST-OFF-${suffix}`, "published", false, null),
-    product(ids.inactiveCategoryProductId, ids.inactiveCategoryId, `Test Hidden Category ${suffix}`, `TEST-CAT-${suffix}`, "published", true, null),
-    product(ids.unavailableId, ids.activeCategoryId, `Test Unavailable ${suffix}`, `TEST-UNAV-${suffix}`, "published", true, null),
-    product(ids.zeroStockId, ids.activeCategoryId, `Test Empty ${suffix}`, `TEST-ZERO-${suffix}`, "published", true, null),
-    product(ids.plainId, ids.activeCategoryId, `Test Plain ${suffix}`, `TEST-PLAIN-${suffix}`, "published", true, null),
-    product(ids.brandId, ids.activeCategoryId, `Test Anonymous ${suffix}`, `TEST-BRAND-${suffix}`, "published", true, `Zephyr ${suffix}`),
+    product(ids.publishedId, ids.activeCategoryId, `Test Published ${suffix}`, "published", true, "Visible Brand"),
+    product(ids.draftId, ids.activeCategoryId, `Test Draft ${suffix}`, "draft", true, null),
+    product(ids.archivedId, ids.activeCategoryId, `Test Archived ${suffix}`, "archived", true, null),
+    product(ids.inactiveProductId, ids.activeCategoryId, `Test Inactive Product ${suffix}`, "published", false, null),
+    product(ids.inactiveCategoryProductId, ids.inactiveCategoryId, `Test Hidden Category ${suffix}`, "published", true, null),
+    product(ids.unavailableId, ids.activeCategoryId, `Test Unavailable ${suffix}`, "published", true, null),
+    product(ids.zeroStockId, ids.activeCategoryId, `Test Empty ${suffix}`, "published", true, null),
+    product(ids.plainId, ids.activeCategoryId, `Test Plain ${suffix}`, "published", true, null),
+    product(ids.brandId, ids.activeCategoryId, `Test Anonymous ${suffix}`, "published", true, `Zephyr ${suffix}`),
   ]);
   await database.insert(storeProducts).values([
     listing(ids.publishedId, fulfilmentId, 1500, 4, "available"),
@@ -354,10 +344,6 @@ async function insertFixtures(database: Database, fulfilmentId: string): Promise
       isPrimary: true,
     },
   ]);
-  await database.insert(productAttributes).values([
-    { productId: ids.publishedId, name: "Later", value: "Second", position: 1 },
-    { productId: ids.publishedId, name: "Earlier", value: "First", position: 0 },
-  ]);
   return ids;
 }
 
@@ -365,7 +351,6 @@ function product(
   id: string,
   categoryId: string,
   name: string,
-  sku: string,
   publicationStatus: "draft" | "published" | "archived",
   isActive: boolean,
   brand: string | null,
@@ -376,7 +361,6 @@ function product(
     name,
     brand,
     description: `${name} description`,
-    sku,
     unit: "piece" as const,
     packageSize: 1,
     packageLabel: "1 pc",
@@ -405,13 +389,13 @@ async function removeFixtures(database: Database): Promise<void> {
   const rows = await database
     .select({ id: products.id })
     .from(products)
-    .where(like(products.sku, "TEST-%"));
+    .where(like(products.name, `Test % ${suffix}`));
   const ids = rows.map((row) => row.id);
   if (ids.length > 0) {
     for (const id of ids) {
       await database.delete(storeProducts).where(eq(storeProducts.productId, id));
     }
-    await database.delete(products).where(like(products.sku, "TEST-%"));
+    await database.delete(products).where(like(products.name, `Test % ${suffix}`));
   }
   await database.delete(categories).where(like(categories.slug, "test-%"));
 }

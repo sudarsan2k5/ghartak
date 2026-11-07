@@ -39,7 +39,6 @@ export {
   imageCleanupOperationEnum,
   imageCleanupStatusEnum,
   imageStorageProviderEnum,
-  productAttributes,
   productImages,
   productPublicationStatusEnum,
   productUnitEnum,

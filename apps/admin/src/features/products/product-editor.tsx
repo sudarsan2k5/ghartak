@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { controlClassName, describedBy, Field } from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ImagePicker } from "@/components/ui/image-picker";
+import { MultiImagePicker } from "@/components/ui/multi-image-picker";
 import { useAuthRedirect } from "@/features/auth/use-auth-redirect";
 import { useSession } from "@/features/auth/session-provider";
 import {
@@ -39,7 +39,7 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
       ? { ...emptyProductDraft(), categoryId: fixedCategoryId, publicationStatus: "published", openingReason: "Opening stock" }
       : emptyProductDraft(),
   );
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [original, setOriginal] = useState<LoadedProduct | null>(null);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; isActive: boolean }>>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -95,15 +95,12 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
       setCategories(assignableCategories(categoryResult.data.categories, product.category.id));
       const loaded: LoadedProduct = {
         name: product.name,
-        sku: product.sku,
         categoryId: product.category.id,
         unit: product.unit,
         packageSize: String(product.packageSize),
         packageLabel: product.packageLabel,
         brand: product.brand ?? "",
-        barcode: product.barcode ?? "",
         description: product.description ?? "",
-        attributes: product.attributes.map((attribute) => ({ name: attribute.name, value: attribute.value })),
         publicationStatus: product.publicationStatus,
         isActive: product.isActive,
       };
@@ -126,10 +123,8 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
     setSaved(false);
     setFormError(null);
     setErrors((current) => {
-      const next = Object.fromEntries(
-        Object.entries(current).filter(([field]) => field !== key && !(key === "attributes" && field.startsWith("attributes"))),
-      );
-      return Object.keys(next).length === Object.keys(current).length ? current : next;
+      const { [key]: _cleared, ...next } = current;
+      return next;
     });
   }
 
@@ -166,18 +161,26 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
         setFormError(result.message);
         return;
       }
-      if (imageFile) {
+      // Upload in order so the swipe order matches the picker. One failure should not lose the rest.
+      let failedImages = 0;
+      let hasCover = false;
+      for (const file of imageFiles) {
         const uploaded = await uploadProductImage(client, result.data.id, {
-          file: imageFile,
+          file,
           altText: result.data.name,
-          isPrimary: true,
+          isPrimary: !hasCover,
           idempotencyKey: crypto.randomUUID(),
         });
-        if (!uploaded.ok) {
-          // The product exists, so open it where the image can be retried.
-          router.replace(`/products/${result.data.id}`);
-          return;
+        if (uploaded.ok) {
+          hasCover = true;
+        } else {
+          failedImages += 1;
         }
+      }
+      if (failedImages > 0) {
+        // The product exists, so open it where the images can be retried.
+        router.replace(`/products/${result.data.id}?imagesFailed=${failedImages}`);
+        return;
       }
       router.replace(fixedCategoryId ? `/categories/${fixedCategoryId}` : `/products/${result.data.id}`);
       return;
@@ -265,9 +268,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
         <Field id="name" label="Product name" error={errors["name"]}>
           <input id="name" value={draft.name} aria-invalid={errors["name"] !== undefined} aria-describedby={describedBy("name", errors["name"])} className={controlClassName} onChange={(event) => update("name", event.target.value)} />
         </Field>
-        <Field id="sku" label="SKU" error={errors["sku"]} hint="Uppercase letters, numbers, and hyphens.">
-          <input id="sku" value={draft.sku} aria-invalid={errors["sku"] !== undefined} aria-describedby={describedBy("sku", errors["sku"], "Uppercase letters, numbers, and hyphens.")} className={controlClassName} onChange={(event) => update("sku", event.target.value)} />
-        </Field>
         {fixedCategoryId ? (
           <div>
             <p className="text-sm font-medium">Category</p>
@@ -324,9 +324,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
         <Field id="brand" label="Brand" error={errors["brand"]} hint="Optional.">
           <input id="brand" value={draft.brand} aria-invalid={errors["brand"] !== undefined} aria-describedby={describedBy("brand", errors["brand"], "Optional.")} className={controlClassName} onChange={(event) => update("brand", event.target.value)} />
         </Field>
-        <Field id="barcode" label="Barcode" error={errors["barcode"]} hint="Optional. 8 to 14 digits.">
-          <input id="barcode" inputMode="numeric" value={draft.barcode} aria-invalid={errors["barcode"] !== undefined} aria-describedby={describedBy("barcode", errors["barcode"], "Optional. 8 to 14 digits.")} className={controlClassName} onChange={(event) => update("barcode", event.target.value)} />
-        </Field>
         <div className="md:col-span-2">
           <Field id="description" label="Description" error={errors["description"]} hint="Optional.">
             <textarea id="description" rows={4} value={draft.description} aria-invalid={errors["description"] !== undefined} aria-describedby={describedBy("description", errors["description"], "Optional.")} className={controlClassName} onChange={(event) => update("description", event.target.value)} />
@@ -335,7 +332,7 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
         {mode === "create" ? (
           <>
             <div className="md:col-span-2">
-              <ImagePicker label="Product image" savedUrl={null} file={imageFile} disabled={pending} onFile={setImageFile} onRemoveSaved={() => setImageFile(null)} />
+              <MultiImagePicker label="Product images" files={imageFiles} disabled={pending} onFiles={setImageFiles} />
             </div>
             <label className="flex items-start gap-3 text-sm md:col-span-2">
               <input
@@ -375,32 +372,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
           </>
         ) : null}
       </div>
-      <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-extrabold">Attributes</h2>
-          <button
-            type="button"
-            className="rounded-xl border border-line px-3 py-2 text-sm font-medium"
-            onClick={() => update("attributes", [...draft.attributes, { name: "", value: "" }])}
-          >
-            Add attribute
-          </button>
-        </div>
-        {draft.attributes.length === 0 ? <p className="mt-3 text-sm text-muted">No attributes yet.</p> : null}
-        <ul className="mt-4 space-y-3">
-          {draft.attributes.map((attribute, index) => (
-            <li key={index} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-              <input aria-label={`Attribute ${index + 1} name`} aria-invalid={errors[`attributes.${index}`] !== undefined} value={attribute.name} className={controlClassName} onChange={(event) => update("attributes", draft.attributes.map((row, rowIndex) => rowIndex === index ? { ...row, name: event.target.value } : row))} />
-              <input aria-label={`Attribute ${index + 1} value`} aria-invalid={errors[`attributes.${index}`] !== undefined} value={attribute.value} className={controlClassName} onChange={(event) => update("attributes", draft.attributes.map((row, rowIndex) => rowIndex === index ? { ...row, value: event.target.value } : row))} />
-              <button type="button" className="rounded-xl px-3 py-2 text-sm text-secondary" onClick={() => update("attributes", draft.attributes.filter((_, rowIndex) => rowIndex !== index))}>
-                Remove
-              </button>
-              {errors[`attributes.${index}`] ? <p className="text-sm font-medium text-danger md:col-span-3">{errors[`attributes.${index}`]}</p> : null}
-            </li>
-          ))}
-        </ul>
-        {errors["attributes"] ? <p className="mt-3 text-sm font-medium text-danger">{errors["attributes"]}</p> : null}
-      </section>
       {formError ? (
         <p className="rounded-xl border border-danger bg-wash px-4 py-3 text-sm font-medium text-danger" role="alert">
           {formError}
@@ -433,29 +404,23 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
 
 function loadedFromProduct(product: {
   name: string;
-  sku: string;
   category: { id: string };
   unit: string;
   packageSize: number;
   packageLabel: string;
   brand: string | null;
-  barcode: string | null;
   description: string | null;
-  attributes: Array<{ name: string; value: string }>;
   publicationStatus: LoadedProduct["publicationStatus"];
   isActive: boolean;
 }): LoadedProduct {
   return {
     name: product.name,
-    sku: product.sku,
     categoryId: product.category.id,
     unit: product.unit,
     packageSize: String(product.packageSize),
     packageLabel: product.packageLabel,
     brand: product.brand ?? "",
-    barcode: product.barcode ?? "",
     description: product.description ?? "",
-    attributes: product.attributes.map((attribute) => ({ name: attribute.name, value: attribute.value })),
     publicationStatus: product.publicationStatus,
     isActive: product.isActive,
   };

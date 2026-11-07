@@ -2,7 +2,7 @@
 // each caller inserts them for its run and removes them afterwards.
 import { inArray } from "drizzle-orm";
 import type { Database } from "./client.js";
-import { inventoryMovements, imageCleanup, productAttributes, productImages, products, storeProducts } from "./schema/index.js";
+import { inventoryMovements, imageCleanup, productImages, products, storeProducts } from "./schema/index.js";
 import { seedIds } from "./seed.js";
 
 export const sampleProductIds = {
@@ -30,11 +30,6 @@ const imageIds = {
   onionPrimary: "10000000-0000-4000-8000-000000000086",
 } as const;
 
-const attributeIds = {
-  dalVariety: "10000000-0000-4000-8000-000000000091",
-  milkFat: "10000000-0000-4000-8000-000000000092",
-} as const;
-
 export async function insertSampleCatalogue(db: Database): Promise<void> {
   await removeSampleCatalogue(db);
     await db
@@ -46,8 +41,6 @@ export async function insertSampleCatalogue(db: Database): Promise<void> {
           name: "Toor Dal",
           brand: "Ghartak Staples",
           description: "Split pigeon peas",
-          sku: "SAMPLE-DAL-TOOR",
-          barcode: "8901000000031",
           publicationStatus: "published",
           unit: "kg",
           packageSize: 1,
@@ -60,7 +53,6 @@ export async function insertSampleCatalogue(db: Database): Promise<void> {
           name: "Wheat Atta",
           brand: "Ghartak Staples",
           description: "Whole wheat flour",
-          sku: "SAMPLE-ATTA",
           publicationStatus: "published",
           unit: "kg",
           packageSize: 5,
@@ -73,8 +65,6 @@ export async function insertSampleCatalogue(db: Database): Promise<void> {
           name: "Toned Milk",
           brand: "Ghartak Dairy",
           description: "Pasteurised toned milk",
-          sku: "SAMPLE-MILK",
-          barcode: "8901000000032",
           publicationStatus: "published",
           unit: "litre",
           packageSize: 1,
@@ -86,7 +76,6 @@ export async function insertSampleCatalogue(db: Database): Promise<void> {
           categoryId: seedIds.produce,
           name: "Tomato",
           description: "Fresh tomatoes",
-          sku: "SAMPLE-TOMATO",
           publicationStatus: "published",
           unit: "kg",
           packageSize: 1,
@@ -98,7 +87,6 @@ export async function insertSampleCatalogue(db: Database): Promise<void> {
           categoryId: seedIds.produce,
           name: "Onion",
           description: "Fresh onions",
-          sku: "SAMPLE-ONION",
           publicationStatus: "published",
           unit: "kg",
           packageSize: 1,
@@ -137,25 +125,6 @@ export async function insertSampleCatalogue(db: Database): Promise<void> {
         image(imageIds.tomatoPrimary, sampleProductIds.tomato, "catalog/tomato/primary.jpg", "Tomatoes", 0, true),
         image(imageIds.onionPrimary, sampleProductIds.onion, "catalog/onion/primary.jpg", "Onions", 0, true),
       ]);
-
-    await db
-      .insert(productAttributes)
-      .values([
-        {
-          id: attributeIds.dalVariety,
-          productId: sampleProductIds.dal,
-          name: "Variety",
-          value: "Toor",
-          position: 0,
-        },
-        {
-          id: attributeIds.milkFat,
-          productId: sampleProductIds.milk,
-          name: "Fat",
-          value: "Toned",
-          position: 0,
-        },
-      ]);
 }
 
 export async function removeSampleCatalogue(db: Database): Promise<void> {
@@ -164,7 +133,6 @@ export async function removeSampleCatalogue(db: Database): Promise<void> {
   await db.delete(inventoryMovements).where(inArray(inventoryMovements.storeProductId, listings));
   await db.delete(storeProducts).where(inArray(storeProducts.id, listings));
   await db.delete(imageCleanup).where(inArray(imageCleanup.productId, ids));
-  await db.delete(productAttributes).where(inArray(productAttributes.productId, ids));
   await db.delete(productImages).where(inArray(productImages.productId, ids));
   await db.delete(products).where(inArray(products.id, ids));
 }

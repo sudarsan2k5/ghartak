@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState, type ComponentRef } from "react";
 import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 
 import { offerFromDetail } from "@/cart/quotes";
@@ -14,7 +14,7 @@ import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { PageHeader } from "@/components/PageHeader";
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { ScreenContainer } from "@/components/ScreenContainer";
-import { stockLabel } from "@/catalogue/display";
+import { galleryIndexFromOffset, stockLabel } from "@/catalogue/display";
 import { placeholderLocation } from "@/location/placeholder-location";
 import { homeChrome } from "@/presentation/home";
 import { useProduct } from "@/query/catalogue";
@@ -33,6 +33,7 @@ export default function ProductDetailsScreen() {
   const applyItemQuantity = useCartStore((state) => state.applyItemQuantity);
   const remove = useCartStore((state) => state.remove);
   const [imageIndex, setImageIndex] = useState(0);
+  const gallery = useRef<ComponentRef<typeof ScrollView>>(null);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
   const detail = product.data;
   const subtitle = `${homeChrome.etaLabel} · ${location.label}, ${location.line}`;
@@ -57,11 +58,30 @@ export default function ProductDetailsScreen() {
       {detail ? (
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
           <View className="border-b border-line bg-white" style={{ height: 252 }}>
-            <CatalogueImage
-              deliveryPath={detail.images[imageIndex]?.deliveryPath ?? detail.primaryImage?.deliveryPath ?? null}
-              alt={detail.images[imageIndex]?.altText ?? detail.name}
-              style={{ width, height: 252 }}
-            />
+            {detail.images.length > 0 ? (
+              <ScrollView
+                ref={gallery}
+                horizontal
+                pagingEnabled
+                bounces={false}
+                showsHorizontalScrollIndicator={false}
+                scrollEnabled={detail.images.length > 1}
+                onMomentumScrollEnd={(event) => {
+                  setImageIndex(galleryIndexFromOffset(event.nativeEvent.contentOffset.x, width, detail.images.length));
+                }}
+              >
+                {detail.images.map((image) => (
+                  <CatalogueImage
+                    key={image.id}
+                    deliveryPath={image.deliveryPath}
+                    alt={image.altText ?? detail.name}
+                    style={{ width, height: 252 }}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <CatalogueImage deliveryPath={null} alt={detail.name} style={{ width, height: 252 }} />
+            )}
             {detail.images.length > 1 ? (
               <View className="absolute bottom-3 w-full flex-row items-center justify-center gap-1">
                 {detail.images.map((image, index) => (
@@ -71,6 +91,7 @@ export default function ProductDetailsScreen() {
                     accessibilityLabel={`Photo ${index + 1}`}
                     onPress={() => {
                       setImageIndex(index);
+                      gallery.current?.scrollTo({ x: index * width, animated: true });
                     }}
                     style={{
                       width: index === imageIndex ? 16 : 4,
@@ -112,23 +133,6 @@ export default function ProductDetailsScreen() {
             >
               {mode?.kind === "unavailable" ? mode.label : stockLabel(detail.stock)}
             </AppText>
-            {detail.attributes.length > 0 ? (
-              <View className="gap-2 border-t border-line pt-4">
-                <AppText family="inter" weight="extrabold" className="text-[15px] uppercase text-ink">
-                  Good to know
-                </AppText>
-                {detail.attributes.map((attribute) => (
-                  <AppText
-                    key={`${attribute.position}-${attribute.name}`}
-                    family="inter"
-                    weight="regular"
-                    className="text-[12px] leading-5 text-secondary"
-                  >
-                    {`${attribute.name}: ${attribute.value}`}
-                  </AppText>
-                ))}
-              </View>
-            ) : null}
           </View>
         </ScrollView>
       ) : null}

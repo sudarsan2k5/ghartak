@@ -3,7 +3,6 @@ import {
   categories,
   homeDailyTiles,
   imageCleanup,
-  productAttributes,
   productImages,
   products,
   storeProducts,
@@ -42,13 +41,6 @@ export type CatalogueImageRow = {
   altText: string | null;
   position: number;
   isPrimary: boolean;
-};
-
-export type CatalogueAttributeRow = {
-  productId: string;
-  name: string;
-  value: string;
-  position: number;
 };
 
 export function createCatalogueRepository(db: Database) {
@@ -137,18 +129,6 @@ export function createCatalogueRepository(db: Database) {
         .orderBy(asc(productImages.position), asc(productImages.id));
     },
 
-    async listAttributes(productId: string): Promise<CatalogueAttributeRow[]> {
-      return db
-        .select({
-          productId: productAttributes.productId,
-          name: productAttributes.name,
-          value: productAttributes.value,
-          position: productAttributes.position,
-        })
-        .from(productAttributes)
-        .where(eq(productAttributes.productId, productId))
-        .orderBy(asc(productAttributes.position), asc(productAttributes.id));
-    },
   };
 }
 
@@ -165,7 +145,6 @@ function visibilityWhere(query: ProductListQuery): SQL | undefined {
     const search = or(
       sql`${products.name} ILIKE ${pattern} ESCAPE '\\'`,
       sql`${products.brand} ILIKE ${pattern} ESCAPE '\\'`,
-      sql`${products.sku} ILIKE ${pattern} ESCAPE '\\'`,
     );
     if (search) {
       filters.push(search);

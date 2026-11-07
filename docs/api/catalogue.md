@@ -53,7 +53,7 @@ Returns the four "Your daily everything" boxes ordered by `position`, each with 
 | `maxPrice` | none | Integer paise, inclusive. Must be greater than or equal to `minPrice` |
 | `inStock` | `false` | `true` or `false` |
 
-Search is case-insensitive and matches product name, brand, or SKU. `%`, `_`, and `\` in the search text are matched literally. Filters run before pagination. `total` is the filtered count. Ordering is stable because every sort ends with the product id. An empty page is returned when `page` is past the end.
+Search is case-insensitive and matches product name or brand. `%`, `_`, and `\` in the search text are matched literally. Filters run before pagination. `total` is the filtered count. Ordering is stable because every sort ends with the product id. An empty page is returned when `page` is past the end.
 
 `descriptionSummary` is the description truncated to 160 characters. `primaryImage` is null when the product has no primary image.
 
@@ -111,7 +111,7 @@ The seeded catalogue, sorted by name:
 
 ## GET /api/v1/products/:productId
 
-`:productId` must be a UUID. The body adds the full description, the image gallery ordered by position, and attributes ordered by position. A missing image or attribute list is an empty array. Brand may be null.
+`:productId` must be a UUID. The body adds the full description and the image gallery ordered by position. A missing image list is an empty array. Brand may be null.
 
 ```json
 {
@@ -156,13 +156,6 @@ The seeded catalogue, sorted by name:
       "position": 1,
       "isPrimary": false
     }
-  ],
-  "attributes": [
-    {
-      "name": "Variety",
-      "value": "Toor",
-      "position": 0
-    }
   ]
 }
 ```
@@ -197,4 +190,4 @@ Responses include the delivery path, alt text, position, and primary flag. They 
 
 ## Not included
 
-The response does not include barcode, SKU, warehouse id, publication status, or operational flags. SKU is searchable but not returned. There is no Redis cache, no admin write API, and no cart or checkout.
+The response does not include warehouse id, publication status, or operational flags. There is no Redis cache, no admin write API, and no cart or checkout.

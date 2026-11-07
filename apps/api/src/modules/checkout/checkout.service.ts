@@ -81,7 +81,6 @@ export function createCheckoutService(db: Database, options: { trackingTokenSecr
             productId: products.id,
             storeId: storeProducts.storeId,
             name: products.name,
-            sku: products.sku,
             publicationStatus: products.publicationStatus,
             productActive: products.isActive,
             categoryActive: categories.isActive,
@@ -102,7 +101,6 @@ export function createCheckoutService(db: Database, options: { trackingTokenSecr
           listingId: string;
           storeId: string;
           productName: string;
-          sku: string;
           quantity: number;
           unitPricePaise: number;
           lineTotalPaise: number;
@@ -143,7 +141,6 @@ export function createCheckoutService(db: Database, options: { trackingTokenSecr
             listingId: listing.listingId,
             storeId: listing.storeId,
             productName: listing.name,
-            sku: listing.sku,
             quantity: item.quantity,
             unitPricePaise,
             lineTotalPaise,
@@ -229,7 +226,6 @@ async function insertOrder(
       productId: string;
       listingId: string;
       productName: string;
-      sku: string;
       quantity: number;
       unitPricePaise: number;
       lineTotalPaise: number;
@@ -284,7 +280,6 @@ async function insertOrder(
       orderId: order.id,
       productId: line.productId,
       productName: line.productName,
-      sku: line.sku,
       quantity: line.quantity,
       unitPricePaise: line.unitPricePaise,
       lineTotalPaise: line.lineTotalPaise,

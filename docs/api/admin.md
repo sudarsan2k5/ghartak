@@ -29,12 +29,12 @@ Create the first administrator with `pnpm --filter @ghartak/api admin:create`. S
 | Method | Path | Effect |
 | --- | --- | --- |
 | GET | `/admin/products` | Page of products, including drafts and archived rows |
-| POST | `/admin/products` | Create a product, its attributes, and its one central listing |
-| GET | `/admin/products/:productId` | Product, attributes, images, price, and stock |
+| POST | `/admin/products` | Create a product and its one central listing |
+| GET | `/admin/products/:productId` | Product, images, price, and stock |
 | PATCH | `/admin/products/:productId` | Update catalogue fields. Price and stock stay on their own routes |
 | DELETE | `/admin/products/:productId` | Archive the product. It is not hard-deleted |
 
-Creation requires a name, SKU, category, unit, pack size, package label, `pricePaise`, and `openingStockQuantity`. Opening stock above zero also requires `openingReason` and writes an `addition` movement. Zero opening stock stores `out_of_stock` and writes no movement. New products default to `draft`.
+Creation requires a name, category, unit, pack size, package label, `pricePaise`, and `openingStockQuantity`. Opening stock above zero also requires `openingReason` and writes an `addition` movement. Zero opening stock stores `out_of_stock` and writes no movement. New products default to `draft`.
 
 `DELETE` sets `publication_status` to `archived` and `is_active` to false. Listings, movements, and order history stay in place. The public catalogue hides the product.
 

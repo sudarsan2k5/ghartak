@@ -29,7 +29,6 @@ export type DependencyStatus = z.infer<typeof dependencyStatusSchema>;
 export type ReadinessResponse = z.infer<typeof readinessResponseSchema>;
 
 export {
-  catalogueAttributeSchema,
   catalogueCategorySchema,
   catalogueImageSchema,
   catalogueProductSortValues,
@@ -48,7 +47,6 @@ export {
   productListQuerySchema,
   productListResponseSchema,
   summarizeDescription,
-  type CatalogueAttribute,
   type CatalogueCategory,
   type CatalogueImage,
   type CatalogueProductSort,
@@ -90,7 +88,6 @@ export {
 } from "./admin-orders.js";
 
 export {
-  adminAttributeSchema,
   adminCategoryCreateSchema,
   adminCategoryListResponseSchema,
   adminCategoryOrderSchema,

@@ -87,7 +87,7 @@ export function InventoryListScreen() {
             id="inventory-search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Name, brand, or SKU"
+            placeholder="Name or brand"
             className={`${controlClassName} mt-2`}
           />
         </div>
@@ -118,7 +118,7 @@ export function InventoryListScreen() {
       {view.kind === "empty" ? (
         <section className="rounded-2xl border border-dashed border-line bg-white p-8 text-center">
           <h2 className="font-display text-lg font-extrabold">No products match</h2>
-          <p className="mt-2 text-sm text-secondary">Try another name, brand, or SKU.</p>
+          <p className="mt-2 text-sm text-secondary">Try another name or brand.</p>
         </section>
       ) : null}
       {view.kind === "ready" ? (
@@ -184,7 +184,6 @@ function InventoryTable({
           <thead className="border-b border-line text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Product</th>
-              <th className="px-4 py-3 font-medium">SKU</th>
               <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Stock</th>
               <th className="px-4 py-3 font-medium">Unit</th>
@@ -199,7 +198,6 @@ function InventoryTable({
                   <p className="font-medium">{product.name}</p>
                   <p className="text-muted">{product.packageLabel}</p>
                 </td>
-                <td className="px-4 py-3">{product.sku}</td>
                 <td className="px-4 py-3">{product.category.name}</td>
                 <td className="px-4 py-3">{formatCount(product.inventory.stockQuantity)}</td>
                 <td className="px-4 py-3">{product.unit}</td>
@@ -225,7 +223,6 @@ function InventoryTable({
         {products.map((product) => (
           <li key={product.id} className="rounded-2xl border border-line bg-white p-4 shadow-card">
             <p className="font-medium">{product.name}</p>
-            <p className="text-sm text-muted">{product.sku}</p>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-muted">Category</dt>

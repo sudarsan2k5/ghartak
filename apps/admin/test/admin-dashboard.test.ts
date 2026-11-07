@@ -263,8 +263,6 @@ function sampleProduct(input: {
     id: input.id ?? productId,
     name: input.name ?? "Toor Dal",
     brand: null,
-    sku: "DAL-TOOR-1KG",
-    barcode: null,
     category: { id: categoryId, name: "Staples", slug: "staples" },
     unit: "kg",
     packageLabel: "1 kg",

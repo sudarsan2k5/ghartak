@@ -8,7 +8,6 @@ import {
   closeDatabase,
   inventoryMovements,
   openDatabase,
-  productAttributes,
   productImages,
   products,
   storeProducts,
@@ -27,7 +26,6 @@ import { assertImageUpload, catalogueDeliveryPath, catalogueObjectKey } from "..
 import { createLogger } from "../src/logger.js";
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 8);
-const skuPrefix = `ADM-${suffix.toUpperCase()}`;
 const password = "correct-horse-battery";
 const adminEmail = `admin-${suffix}@example.com`;
 const customerEmail = `customer-${suffix}@example.com`;
@@ -292,21 +290,18 @@ describe("admin catalogue", () => {
     const created = await send(app, token, "POST", "/api/v1/admin/products", {
       name: `Admin Dal ${suffix}`,
       brand: "Ghartak",
-      sku: `${skuPrefix}-DAL`,
       description: "Split peas for the admin test",
       categoryId: category.id,
       unit: "kg",
       packageSize: 1,
       packageLabel: "1 kg",
       publicationStatus: "published",
-      attributes: [{ name: "Variety", value: "Toor" }],
       pricePaise: 9900,
       openingStockQuantity: 4,
       openingReason: "Opening count",
     });
     assert.equal(created.statusCode, 200, created.body);
-    const product = created.json() as { id: string; sku: string; publicationStatus: string; inventory: { stockQuantity: number } };
-    assert.equal(product.sku, `${skuPrefix}-DAL`);
+    const product = created.json() as { id: string; publicationStatus: string; inventory: { stockQuantity: number } };
     assert.equal(product.inventory.stockQuantity, 4);
     const [opening] = await db
       .select({ actorUserId: inventoryMovements.actorUserId })
@@ -340,7 +335,6 @@ describe("admin catalogue", () => {
     const category = await createCategory(app, token, `Shelf ${suffix}`);
     await send(app, token, "POST", "/api/v1/admin/products", {
       name: `Shelf Item ${suffix}`,
-      sku: `${skuPrefix}-SHELF`,
       categoryId: category.id,
       unit: "piece",
       packageSize: 1,
@@ -368,7 +362,6 @@ describe("admin catalogue", () => {
     const category = await createCategory(app, token, `Stock ${suffix}`);
     const created = await send(app, token, "POST", "/api/v1/admin/products", {
       name: `Stock Item ${suffix}`,
-      sku: `${skuPrefix}-STOCK`,
       categoryId: category.id,
       unit: "kg",
       packageSize: 1,
@@ -564,7 +557,7 @@ async function cleanup(database: Database): Promise<void> {
   const productRows = await database
     .select({ id: products.id })
     .from(products)
-    .where(like(products.sku, `${skuPrefix}-%`));
+    .where(like(products.name, `% ${suffix}`));
   const productIds = productRows.map((row) => row.id);
   if (productIds.length > 0) {
     const listings = await database
@@ -577,7 +570,6 @@ async function cleanup(database: Database): Promise<void> {
       await database.delete(storeProducts).where(inArray(storeProducts.id, listingIds));
     }
     await database.delete(productImages).where(inArray(productImages.productId, productIds));
-    await database.delete(productAttributes).where(inArray(productAttributes.productId, productIds));
     await database.delete(products).where(inArray(products.id, productIds));
   }
   await database.delete(categories).where(like(categories.slug, `%${suffix}%`));

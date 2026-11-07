@@ -85,6 +85,13 @@
       "when": 1793403000000,
       "tag": "0011_category_order_and_mrp",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793404000000,
+      "tag": "0012_remove_sku_barcode_attributes",
+      "breakpoints": true
     }
   ]
 }

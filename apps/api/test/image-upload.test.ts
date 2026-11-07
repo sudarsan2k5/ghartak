@@ -28,7 +28,6 @@ import { createMemoryImageStorage } from "../src/modules/admin/images/image-stor
 import { createLogger } from "../src/logger.js";
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 8);
-const skuPrefix = `IMG-${suffix.toUpperCase()}`;
 const password = "correct-horse-battery";
 const adminEmail = `img-admin-${suffix}@example.com`;
 
@@ -121,7 +120,6 @@ describe("admin image upload http", () => {
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: `Upload ${suffix}`,
-        sku: `${skuPrefix}-ONE`,
         categoryId: (category.json() as { id: string }).id,
         unit: "piece",
         packageSize: 1,
@@ -372,7 +370,7 @@ async function countImages(owner: string) {
 }
 
 async function cleanup(database: Database): Promise<void> {
-  const productRows = await database.select({ id: products.id }).from(products).where(like(products.sku, `${skuPrefix}-%`));
+  const productRows = await database.select({ id: products.id }).from(products).where(like(products.name, `Upload ${suffix}`));
   const ids = productRows.map((row) => row.id);
   for (const id of ids) {
     await database.delete(imageCleanup).where(eq(imageCleanup.productId, id));

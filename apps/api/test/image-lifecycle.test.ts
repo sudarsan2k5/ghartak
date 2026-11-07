@@ -541,7 +541,6 @@ async function insertFixture(database: Database) {
     id: productIdValue,
     categoryId: category.id,
     name: `Lifecycle ${suffix}`,
-    sku: `LC6A1-${suffix}`,
     unit: "piece",
     packageSize: 1,
     packageLabel: "1 pc",
@@ -588,7 +587,7 @@ async function insertExtraImage(database: Database, ownerProductId: string, labe
 }
 
 async function cleanup(database: Database): Promise<void> {
-  const productRows = await database.select({ id: products.id }).from(products).where(like(products.sku, "LC6A1-%"));
+  const productRows = await database.select({ id: products.id }).from(products).where(like(products.name, `Lifecycle ${suffix}`));
   const ids = productRows.map((row) => row.id);
   if (ids.length === 0) {
     return;

@@ -8,12 +8,8 @@ import {
 
 const nameSchema = z.string().trim().min(1).max(160);
 const reasonSchema = z.string().trim().min(1).max(200);
-const skuSchema = z.string().trim().regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/);
-const barcodeSchema = z.string().regex(/^[0-9]{8,14}$/);
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const packageLabelSchema = z.string().trim().min(1).max(80);
-const attributeNameSchema = z.string().trim().min(1).max(80);
-const attributeValueSchema = z.string().trim().min(1).max(200);
 
 export const adminLoginRequestSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
@@ -29,37 +25,9 @@ export const adminSessionResponseSchema = z.object({
   }),
 });
 
-export const adminAttributeInputSchema = z.object({
-  name: attributeNameSchema,
-  value: attributeValueSchema,
-});
-
-export const adminAttributeSchema = adminAttributeInputSchema.extend({
-  position: z.number().int().nonnegative(),
-});
-
-const attributeListSchema = z
-  .array(adminAttributeInputSchema)
-  .max(30)
-  .superRefine((attributes, ctx) => {
-    const names = new Set<string>();
-    for (const [index, attribute] of attributes.entries()) {
-      if (names.has(attribute.name)) {
-        ctx.addIssue({
-          code: "custom",
-          path: [index, "name"],
-          message: "Attribute names must be unique",
-        });
-      }
-      names.add(attribute.name);
-    }
-  });
-
 export const adminProductCreateSchema = z.object({
   name: nameSchema,
   brand: z.string().trim().min(1).max(120).nullable().optional(),
-  sku: skuSchema,
-  barcode: barcodeSchema.nullable().optional(),
   description: z.string().trim().min(1).max(4000).nullable().optional(),
   categoryId: z.uuid(),
   unit: productUnitSchema,
@@ -67,7 +35,6 @@ export const adminProductCreateSchema = z.object({
   packageLabel: packageLabelSchema,
   publicationStatus: productPublicationStatusSchema.optional(),
   isActive: z.boolean().optional(),
-  attributes: attributeListSchema.optional(),
   pricePaise: paiseSchema,
   mrpPaise: paiseSchema.nullable().optional(),
   openingStockQuantity: z.number().int().nonnegative(),
@@ -89,8 +56,6 @@ export const adminProductUpdateSchema = z
   .object({
     name: nameSchema.optional(),
     brand: z.string().trim().min(1).max(120).nullable().optional(),
-    sku: skuSchema.optional(),
-    barcode: barcodeSchema.nullable().optional(),
     description: z.string().trim().min(1).max(4000).nullable().optional(),
     categoryId: z.uuid().optional(),
     unit: productUnitSchema.optional(),
@@ -98,8 +63,7 @@ export const adminProductUpdateSchema = z
     packageLabel: packageLabelSchema.optional(),
     publicationStatus: productPublicationStatusSchema.optional(),
     isActive: z.boolean().optional(),
-    attributes: attributeListSchema.optional(),
-  })
+    })
   .refine((value) => Object.keys(value).length > 0, { message: "At least one field is required" });
 
 export const adminCategoryCreateSchema = z.object({
@@ -227,8 +191,6 @@ export const adminProductSummarySchema = z.object({
   id: z.uuid(),
   name: z.string(),
   brand: z.string().nullable(),
-  sku: z.string(),
-  barcode: z.string().nullable(),
   category: z.object({
     id: z.uuid(),
     name: z.string(),
@@ -245,7 +207,6 @@ export const adminProductSummarySchema = z.object({
 export const adminProductSchema = adminProductSummarySchema.extend({
   description: z.string().nullable(),
   packageSize: z.number().positive(),
-  attributes: z.array(adminAttributeSchema),
   images: z.array(adminImageSchema),
 });
 

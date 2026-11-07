@@ -7,14 +7,8 @@ import {
 } from "@ghartak/contracts";
 import { rupeesToPaise } from "./money";
 
-export type AttributeDraft = {
-  name: string;
-  value: string;
-};
-
 export type ProductDraft = {
   name: string;
-  sku: string;
   categoryId: string;
   unit: string;
   packageSize: string;
@@ -24,9 +18,7 @@ export type ProductDraft = {
   openingStock: string;
   openingReason: string;
   brand: string;
-  barcode: string;
   description: string;
-  attributes: AttributeDraft[];
   publicationStatus: "draft" | "published" | "archived";
   isActive: boolean;
 };
@@ -35,15 +27,12 @@ export type FieldErrors = Record<string, string>;
 
 export type LoadedProduct = {
   name: string;
-  sku: string;
   categoryId: string;
   unit: string;
   packageSize: string;
   packageLabel: string;
   brand: string;
-  barcode: string;
   description: string;
-  attributes: AttributeDraft[];
   publicationStatus: "draft" | "published" | "archived";
   isActive: boolean;
 };
@@ -53,7 +42,6 @@ const units = new Set<string>(productUnitValues);
 export function emptyProductDraft(): ProductDraft {
   return {
     name: "",
-    sku: "",
     categoryId: "",
     unit: "",
     packageSize: "",
@@ -63,9 +51,7 @@ export function emptyProductDraft(): ProductDraft {
     openingStock: "0",
     openingReason: "",
     brand: "",
-    barcode: "",
     description: "",
-    attributes: [],
     publicationStatus: "draft",
     isActive: true,
   };
@@ -91,13 +77,11 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
   if (!packageSize.ok) {
     errors["packageSize"] = packageSize.message;
   }
-  const attributes = cleanAttributes(input.attributes, errors);
   if (!units.has(input.unit)) {
     errors["unit"] = "Choose a unit.";
   }
   const candidate = {
     name: input.name,
-    sku: input.sku,
     categoryId: input.categoryId,
     unit: input.unit,
     packageSize: packageSize.ok ? packageSize.value : 1,
@@ -107,9 +91,7 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
     ...(mrp?.ok ? { mrpPaise: mrp.paise } : {}),
     ...(input.publicationStatus === "published" ? { publicationStatus: "published" as const } : {}),
     ...(input.brand.trim() ? { brand: input.brand } : {}),
-    ...(input.barcode.trim() ? { barcode: input.barcode } : {}),
     ...(input.description.trim() ? { description: input.description } : {}),
-    ...(attributes.length > 0 ? { attributes } : {}),
     ...(stock.ok && stock.value > 0 ? { openingReason: input.openingReason } : {}),
   };
   const parsed = adminProductCreateSchema.safeParse(candidate);
@@ -135,7 +117,6 @@ export function validateUpdate(
   if (!packageSize.ok) {
     errors["packageSize"] = packageSize.message;
   }
-  const attributes = cleanAttributes(input.attributes, errors);
   if (!units.has(input.unit)) {
     errors["unit"] = "Choose a unit.";
   }
@@ -145,24 +126,18 @@ export function validateUpdate(
 
   const next: LoadedProduct = {
     name: input.name.trim(),
-    sku: input.sku.trim(),
     categoryId: input.categoryId,
     unit: input.unit,
     packageSize: String(packageSize.value),
     packageLabel: input.packageLabel.trim(),
     brand: input.brand.trim(),
-    barcode: input.barcode.trim(),
     description: input.description.trim(),
-    attributes,
     publicationStatus: original.publicationStatus === "archived" ? "archived" : input.publicationStatus,
     isActive: input.isActive,
   };
   const payload: Record<string, unknown> = {};
   if (next.name !== original.name) {
     payload["name"] = next.name;
-  }
-  if (next.sku !== original.sku) {
-    payload["sku"] = next.sku;
   }
   if (next.categoryId !== original.categoryId) {
     payload["categoryId"] = next.categoryId;
@@ -179,14 +154,8 @@ export function validateUpdate(
   if (next.brand !== original.brand) {
     payload["brand"] = next.brand.length > 0 ? next.brand : null;
   }
-  if (next.barcode !== original.barcode) {
-    payload["barcode"] = next.barcode.length > 0 ? next.barcode : null;
-  }
   if (next.description !== original.description) {
     payload["description"] = next.description.length > 0 ? next.description : null;
-  }
-  if (JSON.stringify(next.attributes) !== JSON.stringify(original.attributes)) {
-    payload["attributes"] = next.attributes;
   }
   if (original.publicationStatus !== "archived" && next.publicationStatus !== original.publicationStatus) {
     payload["publicationStatus"] = next.publicationStatus;
@@ -227,23 +196,6 @@ function parsePackageSize(input: string): { ok: true; value: number } | { ok: fa
   return { ok: true, value: Number(trimmed) };
 }
 
-function cleanAttributes(attributes: AttributeDraft[], errors: FieldErrors): AttributeDraft[] {
-  const cleaned: AttributeDraft[] = [];
-  attributes.forEach((attribute, index) => {
-    const name = attribute.name.trim();
-    const value = attribute.value.trim();
-    if (name.length === 0 && value.length === 0) {
-      return;
-    }
-    if (name.length === 0 || value.length === 0) {
-      errors[`attributes.${index}`] = "Enter both an attribute name and a value.";
-      return;
-    }
-    cleaned.push({ name, value });
-  });
-  return cleaned;
-}
-
 export function errorSummary(errors: FieldErrors): string {
   const count = Object.keys(errors).length;
   if (count === 1) {
@@ -261,7 +213,7 @@ const payloadFields: Record<string, string> = {
 
 function fieldKey(path: PropertyKey[]): string {
   const key = path.map((part) => String(part)).join(".") || "form";
-  return payloadFields[key] ?? key.match(/^attributes\.\d+/)?.[0] ?? key;
+  return payloadFields[key] ?? key;
 }
 
 function issuesToErrors(issues: Array<{ path: PropertyKey[]; message: string }>): FieldErrors {
@@ -276,11 +228,8 @@ function issuesToErrors(issues: Array<{ path: PropertyKey[]; message: string }>)
 }
 
 function friendlyMessage(path: string, fallback: string): string {
-  if (path === "name" || path.endsWith(".name") && !path.startsWith("attributes")) {
+  if (path === "name") {
     return "Enter a product name.";
-  }
-  if (path === "sku") {
-    return "Use uppercase letters, numbers, and single hyphens.";
   }
   if (path === "categoryId") {
     return "Choose a category.";
@@ -291,14 +240,8 @@ function friendlyMessage(path: string, fallback: string): string {
   if (path === "openingReason") {
     return "Opening stock requires a reason.";
   }
-  if (path === "barcode") {
-    return "Use 8 to 14 digits, or leave the barcode empty.";
-  }
   if (path === "brand") {
     return "Enter a brand, or leave it empty.";
-  }
-  if (path.startsWith("attributes")) {
-    return "Attribute names must be unique, with a name and value on each row.";
   }
   return fallback;
 }

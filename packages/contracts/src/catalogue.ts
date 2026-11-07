@@ -46,12 +46,6 @@ export const catalogueProductSummarySchema = z.object({
   primaryImage: catalogueImageSchema.nullable(),
 });
 
-export const catalogueAttributeSchema = z.object({
-  name: z.string(),
-  value: z.string(),
-  position: z.number().int().nonnegative(),
-});
-
 export const paginationSchema = z.object({
   page: z.number().int().min(1),
   limit: z.number().int().min(1).max(maxLimit),
@@ -86,7 +80,6 @@ export const productListResponseSchema = z.object({
 export const productDetailResponseSchema = catalogueProductSummarySchema.extend({
   description: z.string().nullable(),
   images: z.array(catalogueImageSchema),
-  attributes: z.array(catalogueAttributeSchema),
 });
 
 export const productListQuerySchema = z
@@ -118,7 +111,6 @@ export type CatalogueCategory = z.infer<typeof catalogueCategorySchema>;
 export type CatalogueImage = z.infer<typeof catalogueImageSchema>;
 export type CatalogueStock = z.infer<typeof catalogueStockSchema>;
 export type CatalogueProductSummary = z.infer<typeof catalogueProductSummarySchema>;
-export type CatalogueAttribute = z.infer<typeof catalogueAttributeSchema>;
 export type ProductListQuery = z.infer<typeof productListQuerySchema>;
 export type ProductListResponse = z.infer<typeof productListResponseSchema>;
 export type ProductDetailResponse = z.infer<typeof productDetailResponseSchema>;

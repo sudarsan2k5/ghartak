@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { discountPercent } from "../src/catalogue/display.ts";
+import { discountPercent, galleryIndexFromOffset } from "../src/catalogue/display.ts";
 import { locationSubtitle } from "../src/location/placeholder-location.ts";
 
 describe("location subtitle", () => {
@@ -31,5 +31,16 @@ describe("discount label", () => {
     assert.equal(discountPercent(3500, 3000), null);
     assert.equal(discountPercent(3000, null), null);
     assert.equal(discountPercent(9999, 10000), null);
+  });
+});
+
+describe("product gallery position", () => {
+  it("follows the swiped page and stays inside the gallery", () => {
+    assert.equal(galleryIndexFromOffset(0, 400, 3), 0);
+    assert.equal(galleryIndexFromOffset(400, 400, 3), 1);
+    assert.equal(galleryIndexFromOffset(790, 400, 3), 2);
+    assert.equal(galleryIndexFromOffset(5000, 400, 3), 2);
+    assert.equal(galleryIndexFromOffset(-20, 400, 3), 0);
+    assert.equal(galleryIndexFromOffset(100, 0, 3), 0);
   });
 });

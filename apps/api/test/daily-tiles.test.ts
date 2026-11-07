@@ -189,7 +189,6 @@ describe("daily tiles and category images", () => {
         headers: authed(),
         payload: {
           name,
-          sku: `TILE-${suffix.toUpperCase()}-${name.toUpperCase()}`,
           categoryId,
           unit: "kg",
           packageSize: 1,

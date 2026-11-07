@@ -137,8 +137,6 @@ export const products = pgTable(
     name: text("name").notNull(),
     brand: text("brand"),
     description: text("description"),
-    sku: text("sku").notNull(),
-    barcode: text("barcode"),
     unit: productUnitEnum("unit").notNull(),
     packageSize: numeric("package_size", { precision: 10, scale: 3, mode: "number" }).notNull(),
     packageLabel: text("package_label").notNull(),
@@ -148,40 +146,13 @@ export const products = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
-    unique("products_sku_unique").on(table.sku),
-    unique("products_barcode_unique").on(table.barcode),
-    check("products_sku_format", sql`${table.sku} ~ '^[A-Z0-9]+(?:-[A-Z0-9]+)*$'`),
     check("products_name_length", sql`char_length(${table.name}) between 1 and 160`),
     check("products_brand_length", sql`${table.brand} is null or char_length(${table.brand}) between 1 and 120`),
-    check("products_barcode_format", sql`${table.barcode} is null or ${table.barcode} ~ '^[0-9]{8,14}$'`),
     check("products_package_size_positive", sql`${table.packageSize} > 0`),
     check("products_package_label_length", sql`char_length(${table.packageLabel}) between 1 and 80`),
     index("products_category_id_idx").on(table.categoryId),
     index("products_publication_status_idx").on(table.publicationStatus),
     index("products_active_idx").on(table.isActive),
-  ],
-);
-
-export const productAttributes = pgTable(
-  "product_attributes",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    productId: uuid("product_id")
-      .notNull()
-      .references(() => products.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    value: text("value").notNull(),
-    position: integer("position").notNull(),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  (table) => [
-    unique("product_attributes_product_position_unique").on(table.productId, table.position),
-    unique("product_attributes_product_name_unique").on(table.productId, table.name),
-    check("product_attributes_name_length", sql`char_length(${table.name}) between 1 and 80`),
-    check("product_attributes_value_length", sql`char_length(${table.value}) between 1 and 200`),
-    check("product_attributes_position_nonnegative", sql`${table.position} >= 0`),
-    index("product_attributes_product_id_idx").on(table.productId),
   ],
 );
 

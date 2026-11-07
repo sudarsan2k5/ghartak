@@ -3,7 +3,6 @@ import {
   categories,
   imageCleanup,
   inventoryMovements,
-  productAttributes,
   productImages,
   products,
   storeProducts,
@@ -16,14 +15,11 @@ import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { HttpError, isUniqueViolation } from "../../../http/errors.js";
 import { listAdminImages } from "../images/image.service.js";
 
-type AttributeInput = { name: string; value: string };
 
 type ProductDetail = {
   id: string;
   name: string;
   brand: string | null;
-  sku: string;
-  barcode: string | null;
   description: string | null;
   category: { id: string; name: string; slug: string };
   unit: "piece" | "kg" | "g" | "litre" | "ml";
@@ -37,7 +33,6 @@ type ProductDetail = {
     stockQuantity: number;
     availability: "available" | "unavailable" | "out_of_stock";
   };
-  attributes: Array<{ name: string; value: string; position: number }>;
   images: Array<{
     id: string;
     deliveryPath: string;
@@ -64,8 +59,6 @@ export function createAdminProductService(db: Database) {
           id: products.id,
           name: products.name,
           brand: products.brand,
-          sku: products.sku,
-          barcode: products.barcode,
           categoryId: categories.id,
           categoryName: categories.name,
           categorySlug: categories.slug,
@@ -109,8 +102,6 @@ export function createAdminProductService(db: Database) {
           id: row.id,
           name: row.name,
           brand: row.brand,
-          sku: row.sku,
-          barcode: row.barcode,
           category: { id: row.categoryId, name: row.categoryName, slug: row.categorySlug },
           unit: row.unit,
           packageLabel: row.packageLabel,
@@ -147,8 +138,6 @@ export function createAdminProductService(db: Database) {
               name: input.name,
               brand: input.brand ?? null,
               description: input.description ?? null,
-              sku: input.sku,
-              barcode: input.barcode ?? null,
               unit: input.unit,
               packageSize: input.packageSize,
               packageLabel: input.packageLabel,
@@ -159,7 +148,6 @@ export function createAdminProductService(db: Database) {
           if (!product) {
             throw new HttpError(500, "Product could not be created");
           }
-          await replaceAttributes(tx, product.id, input.attributes ?? []);
           const [listing] = await tx
             .insert(storeProducts)
             .values({
@@ -203,8 +191,6 @@ export function createAdminProductService(db: Database) {
             .set({
               name: input.name ?? existing.name,
               brand: input.brand === undefined ? existing.brand : input.brand,
-              sku: input.sku ?? existing.sku,
-              barcode: input.barcode === undefined ? existing.barcode : input.barcode,
               description: input.description === undefined ? existing.description : input.description,
               categoryId: input.categoryId ?? existing.category.id,
               unit: input.unit ?? existing.unit,
@@ -214,9 +200,6 @@ export function createAdminProductService(db: Database) {
               isActive: input.isActive ?? existing.isActive,
             })
             .where(eq(products.id, productId));
-          if (input.attributes) {
-            await replaceAttributes(tx, productId, input.attributes);
-          }
           return requireProduct(tx, productId);
         });
       } catch (error) {
@@ -248,7 +231,7 @@ function productWhere(query: AdminProductListQuery): SQL | undefined {
   if (query.search) {
     const pattern = `%${query.search.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_")}%`;
     filters.push(
-      sql`(${products.name} ILIKE ${pattern} ESCAPE '\\' or ${products.brand} ILIKE ${pattern} ESCAPE '\\' or ${products.sku} ILIKE ${pattern} ESCAPE '\\')`,
+      sql`(${products.name} ILIKE ${pattern} ESCAPE '\\' or ${products.brand} ILIKE ${pattern} ESCAPE '\\')`,
     );
   }
   return filters.length > 0 ? and(...filters) : undefined;
@@ -260,8 +243,6 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
       id: products.id,
       name: products.name,
       brand: products.brand,
-      sku: products.sku,
-      barcode: products.barcode,
       description: products.description,
       categoryId: categories.id,
       categoryName: categories.name,
@@ -284,22 +265,11 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
   if (!row) {
     return null;
   }
-  const attributes = await db
-    .select({
-      name: productAttributes.name,
-      value: productAttributes.value,
-      position: productAttributes.position,
-    })
-    .from(productAttributes)
-    .where(eq(productAttributes.productId, productId))
-    .orderBy(asc(productAttributes.position));
   const images = await listAdminImages(db, productId);
   return {
     id: row.id,
     name: row.name,
     brand: row.brand,
-    sku: row.sku,
-    barcode: row.barcode,
     description: row.description,
     category: { id: row.categoryId, name: row.categoryName, slug: row.categorySlug },
     unit: row.unit,
@@ -313,7 +283,6 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
       stockQuantity: row.stockQuantity,
       availability: row.availability,
     },
-    attributes,
     images,
   };
 }
@@ -341,31 +310,10 @@ async function fulfilmentId(tx: DatabaseTransaction): Promise<string> {
   return store.id;
 }
 
-async function replaceAttributes(tx: DatabaseTransaction, productId: string, attributes: AttributeInput[]): Promise<void> {
-  await tx.delete(productAttributes).where(eq(productAttributes.productId, productId));
-  if (attributes.length === 0) {
-    return;
-  }
-  await tx.insert(productAttributes).values(
-    attributes.map((attribute, position) => ({
-      productId,
-      name: attribute.name,
-      value: attribute.value,
-      position,
-    })),
-  );
-}
-
 function mapProductConflict(error: unknown): unknown {
   const unique = isUniqueViolation(error);
   if (!unique) {
     return error;
-  }
-  if (unique.constraint === "products_sku_unique") {
-    return new HttpError(409, "A product with that SKU already exists");
-  }
-  if (unique.constraint === "products_barcode_unique") {
-    return new HttpError(409, "A product with that barcode already exists");
   }
   return new HttpError(409, "That value is already in use");
 }

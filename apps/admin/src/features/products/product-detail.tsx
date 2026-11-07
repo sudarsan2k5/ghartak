@@ -2,6 +2,7 @@
 
 import { adminProductSchema } from "@ghartak/contracts";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { z } from "zod";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -29,6 +30,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   const [archiving, setArchiving] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const imageBase = readImageBaseUrl();
+  const failedImages = Number(useSearchParams().get("imagesFailed") ?? 0);
 
   useEffect(() => {
     if (!client) {
@@ -105,12 +107,16 @@ export function ProductDetail({ productId }: { productId: string }) {
 
   return (
     <div className="space-y-6">
+      {failedImages > 0 ? (
+        <p className="rounded-xl border border-danger bg-wash px-4 py-3 text-sm font-medium text-danger" role="alert">
+          The product was saved, but {failedImages === 1 ? "1 image" : `${failedImages} images`} could not be uploaded. Add {failedImages === 1 ? "it" : "them"} again below.
+        </p>
+      ) : null}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <Link href={`/categories/${product.category.id}`} className="text-sm font-medium text-secondary underline">
             ← {product.category.name}
           </Link>
-          <p className="mt-2 text-sm text-muted">{product.sku}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge value={product.publicationStatus} />
             <StatusBadge value={product.inventory.availability} />
@@ -140,24 +146,11 @@ export function ProductDetail({ productId }: { productId: string }) {
         <Detail label="Brand" value={product.brand ?? "—"} />
         <Detail label="Unit" value={product.unit} />
         <Detail label="Pack" value={`${product.packageSize} · ${product.packageLabel}`} />
-        <Detail label="Barcode" value={product.barcode ?? "—"} />
         <Detail label="Price" value={formatPaise(product.inventory.pricePaise)} />
         <div className="md:col-span-2">
           <h2 className="text-sm font-medium text-muted">Description</h2>
           <p className="mt-2 text-sm leading-6 text-secondary">{product.description ?? "No description."}</p>
         </div>
-      </section>
-      <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <h2 className="font-display text-lg font-extrabold">Attributes</h2>
-        {product.attributes.length === 0 ? <p className="mt-3 text-sm text-muted">No attributes.</p> : null}
-        <dl className="mt-4 divide-y divide-line">
-          {product.attributes.map((attribute) => (
-            <div key={`${attribute.name}-${attribute.position}`} className="grid gap-1 py-3 sm:grid-cols-2">
-              <dt className="text-sm text-muted">{attribute.name}</dt>
-              <dd className="text-sm">{attribute.value}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
       <ImageManager
         productId={product.id}

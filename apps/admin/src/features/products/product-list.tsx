@@ -126,7 +126,7 @@ export function ProductListScreen() {
             id="product-search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Name, brand, or SKU"
+            placeholder="Name or brand"
             className={`${controlClassName} mt-2`}
           />
         </div>
@@ -244,7 +244,6 @@ function ProductTable({
           <thead className="border-b border-line text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Product</th>
-              <th className="px-4 py-3 font-medium">SKU</th>
               <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Brand</th>
               <th className="px-4 py-3 font-medium">Price</th>
@@ -265,7 +264,6 @@ function ProductTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3">{product.sku}</td>
                 <td className="px-4 py-3">{product.category.name}</td>
                 <td className="px-4 py-3">{product.brand ?? "—"}</td>
                 <td className="px-4 py-3">{formatPaise(product.inventory.pricePaise)}</td>
@@ -291,7 +289,6 @@ function ProductTable({
               <ProductMark name={product.name} />
               <div className="min-w-0">
                 <p className="font-medium">{product.name}</p>
-                <p className="text-sm text-muted">{product.sku}</p>
               </div>
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">

@@ -35,7 +35,6 @@ import { createLogger } from "../src/logger.js";
 import { createAdministrator } from "../src/modules/admin/auth/accounts.js";
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
-const skuPrefix = `CHK-${suffix}`;
 const password = "correct-horse-battery";
 const adminEmail = `chk-admin-${suffix.toLowerCase()}@example.com`;
 
@@ -493,23 +492,22 @@ async function insertFixtures(database: Database, fulfilmentId: string): Promise
     },
   ]);
   await database.insert(products).values([
-    product(ids.pricedId, ids.categoryId, `Chk Price ${suffix}`, `${skuPrefix}-PRICE`, "published", true),
-    product(ids.pricedTwoId, ids.categoryId, `Chk Price Two ${suffix}`, `${skuPrefix}-PRICE2`, "published", true),
-    product(ids.stockOneId, ids.categoryId, `Chk One ${suffix}`, `${skuPrefix}-ONE`, "published", true),
-    product(ids.draftId, ids.categoryId, `Chk Draft ${suffix}`, `${skuPrefix}-DRAFT`, "draft", true),
-    product(ids.inactiveId, ids.categoryId, `Chk Off ${suffix}`, `${skuPrefix}-OFF`, "published", false),
+    product(ids.pricedId, ids.categoryId, `Chk Price ${suffix}`, "published", true),
+    product(ids.pricedTwoId, ids.categoryId, `Chk Price Two ${suffix}`, "published", true),
+    product(ids.stockOneId, ids.categoryId, `Chk One ${suffix}`, "published", true),
+    product(ids.draftId, ids.categoryId, `Chk Draft ${suffix}`, "draft", true),
+    product(ids.inactiveId, ids.categoryId, `Chk Off ${suffix}`, "published", false),
     product(
       ids.inactiveCategoryProductId,
       ids.inactiveCategoryId,
       `Chk Hidden ${suffix}`,
-      `${skuPrefix}-HIDDEN`,
       "published",
       true,
     ),
-    product(ids.unavailableId, ids.categoryId, `Chk Unav ${suffix}`, `${skuPrefix}-UNAV`, "published", true),
-    product(ids.emptyId, ids.categoryId, `Chk Empty ${suffix}`, `${skuPrefix}-EMPTY`, "published", true),
-    product(ids.rollbackOkId, ids.categoryId, `Chk Ok ${suffix}`, `${skuPrefix}-OK`, "published", true),
-    product(ids.rollbackFailId, ids.categoryId, `Chk Fail ${suffix}`, `${skuPrefix}-FAIL`, "published", true),
+    product(ids.unavailableId, ids.categoryId, `Chk Unav ${suffix}`, "published", true),
+    product(ids.emptyId, ids.categoryId, `Chk Empty ${suffix}`, "published", true),
+    product(ids.rollbackOkId, ids.categoryId, `Chk Ok ${suffix}`, "published", true),
+    product(ids.rollbackFailId, ids.categoryId, `Chk Fail ${suffix}`, "published", true),
   ]);
   await database.insert(storeProducts).values([
     listing(ids.pricedId, fulfilmentId, 1500, 10, "available"),
@@ -530,7 +528,6 @@ function product(
   id: string,
   categoryId: string,
   name: string,
-  sku: string,
   publicationStatus: "draft" | "published" | "archived",
   isActive: boolean,
 ) {
@@ -538,7 +535,6 @@ function product(
     id,
     categoryId,
     name,
-    sku,
     unit: "piece" as const,
     packageSize: 1,
     packageLabel: "1 pc",
@@ -561,7 +557,7 @@ async function cleanup(database: Database): Promise<void> {
   const productRows = await database
     .select({ id: products.id })
     .from(products)
-    .where(like(products.sku, `${skuPrefix}-%`));
+    .where(like(products.name, `Chk % ${suffix}`));
   const productIds = productRows.map((row) => row.id);
   if (productIds.length > 0) {
     const itemRows = await database

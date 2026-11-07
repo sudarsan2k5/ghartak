@@ -33,7 +33,6 @@ import { createAdministrator } from "../src/modules/admin/auth/accounts.js";
 import { hashTrackingToken, issueTrackingToken } from "../src/modules/orders/tracking-token.js";
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
-const skuPrefix = `TRK-${suffix}`;
 const password = "correct-horse-battery";
 const adminEmail = `trk-admin-${suffix.toLowerCase()}@example.com`;
 const trackingSecret = `trk-secret-${suffix.toLowerCase()}-order-tracking-key`;
@@ -355,7 +354,6 @@ async function insertFixtures(database: Database, fulfilmentId: string) {
       id: ids.productId,
       categoryId: ids.categoryId,
       name: `Trk One ${suffix}`,
-      sku: `${skuPrefix}-ONE`,
       unit: "piece",
       packageSize: 1,
       packageLabel: "1 pc",
@@ -366,7 +364,6 @@ async function insertFixtures(database: Database, fulfilmentId: string) {
       id: ids.secondProductId,
       categoryId: ids.categoryId,
       name: `Trk Two ${suffix}`,
-      sku: `${skuPrefix}-TWO`,
       unit: "piece",
       packageSize: 1,
       packageLabel: "1 pc",
@@ -388,7 +385,7 @@ async function insertFixtures(database: Database, fulfilmentId: string) {
 }
 
 async function cleanup(database: Database): Promise<void> {
-  const productRows = await database.select({ id: products.id }).from(products).where(like(products.sku, `${skuPrefix}-%`));
+  const productRows = await database.select({ id: products.id }).from(products).where(like(products.name, `Trk % ${suffix}`));
   const productIds = productRows.map((row) => row.id);
   if (productIds.length > 0) {
     const itemRows = await database
