@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { infiniteQueryOptions, useInfiniteQuery, useQuery, type QueryClient } from "@tanstack/react-query";
 
 import { getProduct, listCategories, listDailyTiles, listProducts, type ProductListParams } from "@/api/client";
 
@@ -29,9 +29,9 @@ export function useDailyTiles() {
   });
 }
 
-export function useProductCatalogue(params: Omit<ProductListParams, "page"> & { enabled?: boolean }) {
-  const { enabled = true, ...filters } = params;
-  return useInfiniteQuery({
+/** One definition for product lists, so screens and background prefetches share a cache entry. */
+function productListOptions(filters: Omit<ProductListParams, "page">) {
+  return infiniteQueryOptions({
     queryKey: catalogueKeys.products(filters),
     queryFn: ({ pageParam, signal }) => listProducts({ ...filters, page: pageParam, limit: filters.limit ?? 20 }, signal),
     initialPageParam: 1,
@@ -39,8 +39,27 @@ export function useProductCatalogue(params: Omit<ProductListParams, "page"> & { 
       lastPage.pagination.page < lastPage.pagination.pageCount ? lastPage.pagination.page + 1 : undefined,
     staleTime: staleTimeMs,
     retry: 1,
-    enabled,
   });
+}
+
+export function useProductCatalogue(params: Omit<ProductListParams, "page"> & { enabled?: boolean }) {
+  const { enabled = true, ...filters } = params;
+  return useInfiniteQuery({ ...productListOptions(filters), enabled });
+}
+
+/** The filters a category opens with. Prefetches must match them exactly to be reused. */
+export function categoryOpeningFilters(categoryId: string): Omit<ProductListParams, "page"> {
+  return { limit: 20, categoryId, sort: "name" };
+}
+
+/**
+ * Loads the first page of each category in the background so switching categories shows
+ * products straight away. Fresh cache entries are left alone, so this is cheap to repeat.
+ */
+export function prefetchCategoryProducts(queryClient: QueryClient, categoryIds: readonly string[]): void {
+  for (const id of categoryIds) {
+    void queryClient.prefetchInfiniteQuery(productListOptions(categoryOpeningFilters(id)));
+  }
 }
 
 export function useProduct(productId: string) {

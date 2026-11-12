@@ -1,4 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import { RefreshControl, ScrollView, useWindowDimensions, View } from "react-native";
 
 import { BasketBar } from "@/components/BasketBar";
@@ -10,7 +12,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { CategoryGridSkeleton } from "@/components/Skeleton";
 import { placeholderLocation } from "@/location/placeholder-location";
 import { homeChrome } from "@/presentation/home";
-import { useCategories } from "@/query/catalogue";
+import { prefetchCategoryProducts, useCategories } from "@/query/catalogue";
 import { LayoutGrid, RefreshCw } from "lucide-react-native";
 
 const columns = 3;
@@ -20,6 +22,14 @@ export default function CategoriesScreen() {
   const location = placeholderLocation();
   const { width } = useWindowDimensions();
   const categories = useCategories();
+  const queryClient = useQueryClient();
+  const categoryIds = (categories.data?.categories ?? []).map((row) => row.id).join(",");
+  // Warm each category's first page so opening one shows products straight away.
+  useEffect(() => {
+    if (categoryIds) {
+      prefetchCategoryProducts(queryClient, categoryIds.split(","));
+    }
+  }, [categoryIds, queryClient]);
   const tileWidth = (Math.min(width, 520) - 30) / columns;
 
   return (

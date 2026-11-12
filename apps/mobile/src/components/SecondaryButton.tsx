@@ -12,7 +12,7 @@ export function SecondaryButton({ label, onPress }: SecondaryButtonProps) {
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      className="h-[52px] items-center justify-center rounded-xl border border-ink bg-white px-[18px]"
+      className="h-[52px] items-center justify-center rounded-xl border border-ink bg-white px-[18px] active:opacity-70"
     >
       <AppText family="display" weight="bold" className="text-[16px] text-ink">
         {label}

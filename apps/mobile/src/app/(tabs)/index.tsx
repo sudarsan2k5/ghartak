@@ -90,7 +90,7 @@ export default function HomeScreen() {
                   <AppText
                     family="display"
                     weight="extrabold"
-                    className="mt-2 text-[26px] leading-[1.05] text-white"
+                    className="mt-2 text-[26px] leading-[29px] text-white"
                   >
                     {homeChrome.campaign.headline}
                   </AppText>
@@ -209,7 +209,7 @@ function SectionTitle({ title, onSeeAll }: { title: string; onSeeAll: () => void
       <AppText family="display" weight="extrabold" className="text-[19px] text-ink">
         {title}
       </AppText>
-      <Pressable accessibilityRole="button" onPress={onSeeAll} className="flex-row items-center">
+      <Pressable accessibilityRole="button" onPress={onSeeAll} hitSlop={8} className="flex-row items-center active:opacity-60">
         <AppText family="body" weight="semibold" className="text-[12px] text-ink">
           See all
         </AppText>

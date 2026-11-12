@@ -1,5 +1,6 @@
 import type { CatalogueProductSort } from "@ghartak/contracts";
 import { FlashList } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowDownUp, Check, PackageOpen, RefreshCw } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -16,7 +17,8 @@ import { SearchBar } from "@/components/SearchBar";
 import { sortOptions } from "@/catalogue/display";
 import { locationSubtitle, placeholderLocation } from "@/location/placeholder-location";
 import { homeChrome } from "@/presentation/home";
-import { useCategories, useProductCatalogue } from "@/query/catalogue";
+import { tapSelection } from "@/feedback/haptics";
+import { prefetchCategoryProducts, useCategories, useProductCatalogue } from "@/query/catalogue";
 import { AppText } from "@/theme/AppText";
 import { colors } from "@/theme/tokens";
 
@@ -37,6 +39,12 @@ export default function CategoryBrowseScreen() {
   const [sort, setSort] = useState<CatalogueProductSort>("name");
   const [inStock, setInStock] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const queryClient = useQueryClient();
+  // The rail highlight follows the tap at once; the route catches up a frame later.
+  const [selectedId, setSelectedId] = useState(categoryId);
+  useEffect(() => {
+    setSelectedId(categoryId);
+  }, [categoryId]);
 
   useEffect(() => {
     setQuery("");
@@ -62,6 +70,12 @@ export default function CategoryBrowseScreen() {
   });
 
   const list = categories.data?.categories ?? [];
+  const categoryIds = list.map((row) => row.id).join(",");
+  useEffect(() => {
+    if (categoryIds) {
+      prefetchCategoryProducts(queryClient, categoryIds.split(","));
+    }
+  }, [categoryIds, queryClient]);
   const category = list.find((row) => row.id === categoryId) ?? null;
   const title = category?.name ?? "Category";
   const items = (products.data?.pages ?? []).flatMap((page) => page.products);
@@ -109,7 +123,7 @@ export default function CategoryBrowseScreen() {
         <View className="min-h-0 flex-1 flex-row border-t border-line">
           <ScrollView style={{ width: railWidth, flexGrow: 0 }} className="bg-white" showsVerticalScrollIndicator={false}>
             {list.map((row) => {
-              const selected = row.id === categoryId;
+              const selected = row.id === selectedId;
               return (
                 <Pressable
                   key={row.id}
@@ -117,6 +131,11 @@ export default function CategoryBrowseScreen() {
                   accessibilityLabel={row.name}
                   accessibilityState={{ selected }}
                   onPress={() => {
+                    if (row.id === selectedId) {
+                      return;
+                    }
+                    tapSelection();
+                    setSelectedId(row.id);
                     router.setParams({ id: row.id });
                   }}
                   className={`items-center border-l-[3px] px-1.5 py-2.5 ${selected ? "border-ink bg-page" : "border-transparent"}`}
@@ -134,7 +153,7 @@ export default function CategoryBrowseScreen() {
                     family="body"
                     weight={selected ? "extrabold" : "regular"}
                     numberOfLines={2}
-                    className="mt-1 text-center text-[10px] leading-[1.2] text-ink"
+                    className="mt-1 text-center text-[10px] leading-[13px] text-ink"
                   >
                     {row.name}
                   </AppText>

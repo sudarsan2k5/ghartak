@@ -24,3 +24,8 @@ export function warnCartRefused(): void {
 export function confirmSuccess(): void {
   run(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
 }
+
+/** The lightest tick, for moving between tabs and categories. */
+export function tapSelection(): void {
+  run(() => Haptics.selectionAsync());
+}

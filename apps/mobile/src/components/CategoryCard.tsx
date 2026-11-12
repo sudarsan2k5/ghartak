@@ -14,7 +14,7 @@ type CategoryCardProps = {
 export function CategoryCard({ label, onPress, selected = false, imagePath = null, large = false }: CategoryCardProps) {
   const letter = label.trim().slice(0, 1).toUpperCase();
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress} className="px-[5px]">
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress} className="px-[5px] active:opacity-70">
       <View
         className={`aspect-[76/65] w-full items-center justify-center overflow-hidden rounded-xl ${selected ? "border border-ink bg-lime" : "bg-white"}`}
       >
@@ -30,7 +30,7 @@ export function CategoryCard({ label, onPress, selected = false, imagePath = nul
         family="body"
         weight="regular"
         numberOfLines={2}
-        className={`mt-1 text-center leading-[1.2] text-ink ${large ? "text-[12px]" : "text-[10px]"}`}
+        className={`mt-1 text-center text-ink ${large ? "text-[12px] leading-[15px]" : "text-[10px] leading-[13px]"}`}
       >
         {label}
       </AppText>
