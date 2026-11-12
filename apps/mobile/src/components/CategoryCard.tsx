@@ -21,13 +21,13 @@ export function CategoryCard({ label, onPress, selected = false, imagePath = nul
         {imagePath ? (
           <CatalogueImage deliveryPath={imagePath} alt={label} />
         ) : (
-          <AppText family="jakarta" weight="extrabold" className="text-[18px] text-ink">
+          <AppText family="display" weight="extrabold" className="text-[18px] text-ink">
             {letter}
           </AppText>
         )}
       </View>
       <AppText
-        family="inter"
+        family="body"
         weight="regular"
         numberOfLines={2}
         className={`mt-1 text-center leading-[1.2] text-ink ${large ? "text-[12px]" : "text-[10px]"}`}

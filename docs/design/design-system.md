@@ -29,8 +29,12 @@ Shadows:
 
 Two families are used.
 
-- **Plus Jakarta Sans** for display headings, section titles, navigation labels, and some button labels. Weights in the file: Medium, SemiBold, Bold, ExtraBold, ExtraBold Italic.
-- **Inter** for body, prices, metadata, and steppers. Weights in the file: Regular, Medium, Semi Bold, Bold, Extra Bold, Black.
+- **Outfit** (`family="display"`) for display headings, section titles, navigation labels, and some button labels.
+- **Figtree** (`family="body"`) for body, prices, metadata, and steppers.
+
+Noto Sans Devanagari and Noto Sans Oriya take over automatically for Hindi and Odia text.
+
+The original design file used Plus Jakarta Sans where the app now uses Outfit, and Inter where it now uses Figtree. The table below keeps the design file's names; read them as Outfit and Figtree respectively.
 
 | Use | Family | Weight | Size | Line height | Colour |
 | --- | --- | --- | --- | --- | --- |

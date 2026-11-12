@@ -49,7 +49,7 @@ export function BottomNavigation({ state, emitter, navigateToTab, insets }: Bott
                 <tab.Icon color={color} size={19} strokeWidth={selected ? 2.4 : 2} />
               </View>
               <AppText
-                family="jakarta"
+                family="display"
                 weight={selected ? "extrabold" : "medium"}
                 className={`mt-0.5 text-[10px] ${selected ? "text-ink" : "text-muted"}`}
               >

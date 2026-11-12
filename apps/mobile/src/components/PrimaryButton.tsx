@@ -22,7 +22,7 @@ export function PrimaryButton({ label, onPress, tone = "ink", icon, disabled = f
       className={`h-[52px] flex-row items-center justify-center gap-2 rounded-xl px-[18px] ${background} ${disabled ? "opacity-40" : ""}`}
     >
       {icon}
-      <AppText family="jakarta" weight="extrabold" className={`text-[16px] ${text}`}>
+      <AppText family="display" weight="extrabold" className={`text-[16px] ${text}`}>
         {label}
       </AppText>
     </Pressable>

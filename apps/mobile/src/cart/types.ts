@@ -20,6 +20,8 @@ export type CartOffer = {
   packageLabel: string;
   deliveryPath: string | null;
   pricePaise: number;
+  /** Printed MRP when the catalogue has one, used only to show savings. */
+  mrpPaise: number | null;
   stock: {
     quantity: number;
     availability: "available" | "out_of_stock";

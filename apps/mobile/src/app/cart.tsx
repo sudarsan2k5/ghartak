@@ -14,6 +14,7 @@ import { SecondaryButton } from "@/components/SecondaryButton";
 import { useCartLines, type CartLine } from "@/cart/use-cart-lines";
 import { cartLinePresentation, checkoutReadiness } from "@/cart/view";
 import { catalogueKeys } from "@/query/catalogue";
+import { warnCartRefused } from "@/feedback/haptics";
 import { useCartStore } from "@/state/cart";
 import { AppText } from "@/theme/AppText";
 import { formatRupees } from "@/theme/money";
@@ -74,10 +75,10 @@ export default function CartScreen() {
           <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
             <View className="mt-1 rounded-[18px] border border-line bg-white px-3.5 pt-3.5">
               <View className="mb-3 flex-row items-end justify-between px-0.5">
-                <AppText family="jakarta" weight="extrabold" className="text-[16px] text-ink">
+                <AppText family="display" weight="extrabold" className="text-[16px] text-ink">
                   The everyday good stuff
                 </AppText>
-                <AppText family="inter" weight="regular" className="text-[11px] text-secondary">
+                <AppText family="body" weight="regular" className="text-[11px] text-secondary">
                   {`${itemCount} ${itemCount === 1 ? "item" : "items"}`}
                 </AppText>
               </View>
@@ -90,7 +91,10 @@ export default function CartScreen() {
                     if (!line.offer) {
                       return;
                     }
-                    applyItemQuantity(line.offer, quantity);
+                    const result = applyItemQuantity(line.offer, quantity);
+                    if (!result.ok) {
+                      warnCartRefused();
+                    }
                   }}
                   onRemove={() => {
                     remove(line.item.productId);
@@ -107,37 +111,47 @@ export default function CartScreen() {
                 }}
                 className="h-[35px] flex-row items-center justify-between border-t border-line"
               >
-                <AppText family="inter" weight="semibold" className="text-[13px] text-ink">
+                <AppText family="body" weight="semibold" className="text-[13px] text-ink">
                   Add more items
                 </AppText>
                 <Plus color={colors.ink} size={16} strokeWidth={2.2} />
               </Pressable>
             </View>
             <Pressable accessibilityRole="button" onPress={confirmClear} className="mt-3 py-2">
-              <AppText family="inter" weight="semibold" className="text-[13px] text-secondary">
+              <AppText family="body" weight="semibold" className="text-[13px] text-secondary">
                 Clear cart
               </AppText>
             </Pressable>
           </ScrollView>
           <View className="border-t border-line bg-white px-5 pb-3 pt-4">
+            {readiness.ready && cart.savingsPaise > 0 ? (
+              <View className="mb-3 flex-row items-center justify-between rounded-lg bg-savings-wash px-3 py-2">
+                <AppText family="body" weight="semibold" className="text-[12px] text-savings">
+                  You save on MRP
+                </AppText>
+                <AppText family="body" weight="extrabold" className="text-[13px] text-savings">
+                  {formatRupees(cart.savingsPaise, { fractionDigits: 2 })}
+                </AppText>
+              </View>
+            ) : null}
             <View className="mb-3 flex-row items-end justify-between">
-              <AppText family="inter" weight="regular" className="text-[13px] text-secondary">
+              <AppText family="body" weight="regular" className="text-[13px] text-secondary">
                 {`${itemCount} ${itemCount === 1 ? "item" : "items"}`}
               </AppText>
               <View className="items-end">
-                <AppText family="inter" weight="regular" className="text-[11px] text-muted">
+                <AppText family="body" weight="regular" className="text-[11px] text-muted">
                   Subtotal
                 </AppText>
                 {readiness.subtotalPaise !== null ? (
                   <PriceText paise={readiness.subtotalPaise} size="total" fractionDigits={2} />
                 ) : (
-                  <AppText family="inter" weight="semibold" className="text-[14px] text-secondary">
+                  <AppText family="body" weight="semibold" className="text-[14px] text-secondary">
                     {readiness.code === "confirming" ? "Checking prices" : "Price unavailable"}
                   </AppText>
                 )}
               </View>
             </View>
-            <AppText family="inter" weight="regular" className="mb-3 text-[12px] leading-5 text-secondary">
+            <AppText family="body" weight="regular" className="mb-3 text-[12px] leading-5 text-secondary">
               {readiness.ready
                 ? "Prices and stock are taken from the live catalogue. Delivery and offers are added at checkout."
                 : readiness.reason}
@@ -168,13 +182,13 @@ function EmptyCart({ onShop }: { onShop: () => void }) {
       <View className="h-16 w-16 items-center justify-center rounded-full bg-lime">
         <ShoppingBag color={colors.ink} size={28} strokeWidth={2} />
       </View>
-      <AppText family="inter" weight="black" className="text-[27px] text-ink">
+      <AppText family="body" weight="black" className="text-[27px] text-ink">
         Ghartak
       </AppText>
-      <AppText family="jakarta" weight="extrabold" className="text-center text-[20px] text-ink">
+      <AppText family="display" weight="extrabold" className="text-center text-[20px] text-ink">
         Your cart is empty
       </AppText>
-      <AppText family="inter" weight="regular" className="text-center text-[14px] leading-6 text-secondary">
+      <AppText family="body" weight="regular" className="text-center text-[14px] leading-6 text-secondary">
         Add dal, milk, and the rest of the day’s list. Your basket is saved on this device until you are ready.
       </AppText>
       <SecondaryButton label="Continue shopping" onPress={onShop} />
@@ -210,11 +224,11 @@ function CartRow({
         <View className="min-w-0 flex-1">
           <View className="flex-row items-start justify-between gap-2">
             <View className="min-w-0 flex-1">
-              <AppText family="inter" weight="bold" className="text-[13px] text-ink" numberOfLines={2}>
+              <AppText family="body" weight="bold" className="text-[13px] text-ink" numberOfLines={2}>
                 {title}
               </AppText>
               {pack ? (
-                <AppText family="inter" weight="regular" className="mt-0.5 text-[10px] text-muted">
+                <AppText family="body" weight="regular" className="mt-0.5 text-[10px] text-muted">
                   {pack}
                 </AppText>
               ) : null}
@@ -222,23 +236,23 @@ function CartRow({
             {presentation.lineTotalPaise !== null ? (
               <PriceText paise={presentation.lineTotalPaise} fractionDigits={2} />
             ) : line.status.kind === "loading" ? (
-              <AppText family="inter" weight="semibold" className="text-[12px] text-muted">
+              <AppText family="body" weight="semibold" className="text-[12px] text-muted">
                 …
               </AppText>
             ) : null}
           </View>
           {presentation.unitPricePaise !== null ? (
-            <AppText family="inter" weight="regular" className="mt-1 text-[11px] text-muted">
+            <AppText family="body" weight="regular" className="mt-1 text-[11px] text-muted">
               {`${formatRupees(presentation.unitPricePaise, { fractionDigits: 2 })} each`}
             </AppText>
           ) : null}
           {presentation.stockQuantity !== null && line.status.kind === "over_stock" ? (
-            <AppText family="inter" weight="regular" className="mt-1 text-[11px] text-secondary">
+            <AppText family="body" weight="regular" className="mt-1 text-[11px] text-secondary">
               {`${presentation.stockQuantity} in stock now`}
             </AppText>
           ) : null}
           {presentation.message ? (
-            <AppText family="inter" weight="regular" className="mt-1.5 text-[12px] leading-5 text-secondary">
+            <AppText family="body" weight="regular" className="mt-1.5 text-[12px] leading-5 text-secondary">
               {presentation.message}
             </AppText>
           ) : null}
@@ -246,21 +260,21 @@ function CartRow({
             {presentation.allowQuantityChange ? (
               <QuantitySelector quantity={line.item.quantity} maxQuantity={maxQuantity} onChange={onQuantity} />
             ) : (
-              <AppText family="inter" weight="regular" className="text-[12px] text-muted">
+              <AppText family="body" weight="regular" className="text-[12px] text-muted">
                 {`Qty ${line.item.quantity}`}
               </AppText>
             )}
             <View className="flex-row items-center gap-3">
               {presentation.allowRetry ? (
                 <Pressable accessibilityRole="button" onPress={onRetry}>
-                  <AppText family="inter" weight="semibold" className="text-[12px] text-ink">
+                  <AppText family="body" weight="semibold" className="text-[12px] text-ink">
                     Try again
                   </AppText>
                 </Pressable>
               ) : null}
               {presentation.allowRemove ? (
                 <Pressable accessibilityRole="button" onPress={onRemove}>
-                  <AppText family="inter" weight="semibold" className="text-[12px] text-secondary">
+                  <AppText family="body" weight="semibold" className="text-[12px] text-secondary">
                     Remove
                   </AppText>
                 </Pressable>

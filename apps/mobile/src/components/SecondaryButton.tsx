@@ -14,7 +14,7 @@ export function SecondaryButton({ label, onPress }: SecondaryButtonProps) {
       onPress={onPress}
       className="h-[52px] items-center justify-center rounded-xl border border-ink bg-white px-[18px]"
     >
-      <AppText family="jakarta" weight="bold" className="text-[16px] text-ink">
+      <AppText family="display" weight="bold" className="text-[16px] text-ink">
         {label}
       </AppText>
     </Pressable>

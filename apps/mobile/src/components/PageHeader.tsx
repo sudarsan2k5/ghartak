@@ -26,12 +26,12 @@ export function PageHeader(props: PageHeaderProps) {
     return (
       <View className="gap-3 px-5 pb-4 pt-1">
         <View className="flex-row items-center">
-          <AppText family="inter" weight="black" className="text-[27px] text-ink">
+          <AppText family="body" weight="black" className="text-[27px] text-ink">
             Ghartak
           </AppText>
           <View className="ml-2 flex-row items-center gap-1 rounded-lg bg-ink px-2 py-1">
             <Zap color={colors.white} size={12} strokeWidth={2.4} />
-            <AppText family="inter" weight="extrabold" className="text-[12px] text-white">
+            <AppText family="body" weight="extrabold" className="text-[12px] text-white">
               {props.etaLabel}
             </AppText>
           </View>
@@ -46,11 +46,11 @@ export function PageHeader(props: PageHeaderProps) {
           </Pressable>
         </View>
         <View className="flex-row items-center">
-          <AppText family="inter" weight="extrabold" className="text-[13px] text-ink">
+          <AppText family="body" weight="extrabold" className="text-[13px] text-ink">
             {props.addressLabel}
           </AppText>
           <AppText
-            family="inter"
+            family="body"
             weight="regular"
             numberOfLines={1}
             className="shrink text-[13px] text-ink"
@@ -71,11 +71,11 @@ export function PageHeader(props: PageHeaderProps) {
         </Pressable>
       ) : null}
       <View className="flex-1">
-        <AppText family="jakarta" weight="extrabold" className="text-[20px] text-ink">
+        <AppText family="display" weight="extrabold" className="text-[20px] text-ink">
           {props.title}
         </AppText>
         {props.subtitle ? (
-          <AppText family="inter" weight="regular" className="mt-0.5 text-[12px] text-secondary">
+          <AppText family="body" weight="regular" className="mt-0.5 text-[12px] text-secondary">
             {props.subtitle}
           </AppText>
         ) : null}

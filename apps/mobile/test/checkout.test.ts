@@ -67,6 +67,7 @@ function offer(): CartOffer {
     packageLabel: "1 kg",
     deliveryPath: null,
     pricePaise: 12000,
+    mrpPaise: null,
     stock: { quantity: 40, availability: "available", purchasable: true },
   };
 }

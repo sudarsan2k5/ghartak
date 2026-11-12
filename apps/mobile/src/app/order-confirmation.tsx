@@ -39,10 +39,10 @@ export default function OrderConfirmationScreen() {
       <ScreenContainer edges={["top", "bottom"]}>
         <PageHeader variant="title" title="Order placed" />
         <View className="flex-1 items-center justify-center px-8">
-          <AppText family="jakarta" weight="extrabold" className="text-center text-[20px] text-ink">
+          <AppText family="display" weight="extrabold" className="text-center text-[20px] text-ink">
             Order details are not on this device
           </AppText>
-          <AppText family="inter" weight="regular" className="mt-3 text-center text-[14px] leading-6 text-secondary">
+          <AppText family="body" weight="regular" className="mt-3 text-center text-[14px] leading-6 text-secondary">
             The confirmation is shown only after a successful checkout on this phone.
           </AppText>
           <View className="mt-6 w-full">
@@ -61,13 +61,13 @@ export default function OrderConfirmationScreen() {
           <View className="h-16 w-16 items-center justify-center rounded-full bg-lime">
             <Check color={colors.ink} size={34} strokeWidth={2.4} />
           </View>
-          <AppText family="jakarta" weight="extrabold" className="mt-4 text-center text-[22px] text-ink">
+          <AppText family="display" weight="extrabold" className="mt-4 text-center text-[22px] text-ink">
             Order placed successfully
           </AppText>
-          <AppText family="inter" weight="regular" className="mt-2 text-center text-[13px] leading-5 text-secondary">
+          <AppText family="body" weight="regular" className="mt-2 text-center text-[13px] leading-5 text-secondary">
             Pay in cash when it is delivered. Keep this order number.
           </AppText>
-          <AppText family="inter" weight="extrabold" className="mt-4 text-[18px] text-ink">
+          <AppText family="body" weight="extrabold" className="mt-4 text-[18px] text-ink">
             {order.orderNumber}
           </AppText>
         </View>
@@ -81,22 +81,22 @@ export default function OrderConfirmationScreen() {
         </View>
 
         <View className="mt-4 rounded-[18px] border border-line bg-white px-4 py-4">
-          <AppText family="jakarta" weight="extrabold" className="mb-3 text-[16px] text-ink">
+          <AppText family="display" weight="extrabold" className="mb-3 text-[16px] text-ink">
             Items
           </AppText>
           {order.items.map((item) => (
             <View key={`${item.productId}-${item.quantity}`} className="flex-row justify-between gap-3 py-2">
               <View className="min-w-0 flex-1">
-                <AppText family="inter" weight="bold" className="text-[13px] text-ink">
+                <AppText family="body" weight="bold" className="text-[13px] text-ink">
                   {item.productName}
                 </AppText>
-                <AppText family="inter" weight="regular" className="mt-0.5 text-[11px] text-muted">
+                <AppText family="body" weight="regular" className="mt-0.5 text-[11px] text-muted">
                   {`Qty ${item.quantity}`}
                 </AppText>
               </View>
               <View className="items-end">
                 <PriceText paise={item.lineTotalPaise} fractionDigits={2} />
-                <AppText family="inter" weight="regular" className="mt-0.5 text-[10px] text-muted">
+                <AppText family="body" weight="regular" className="mt-0.5 text-[10px] text-muted">
                   {`${formatRupees(item.unitPricePaise, { fractionDigits: 2 })} each`}
                 </AppText>
               </View>
@@ -106,7 +106,7 @@ export default function OrderConfirmationScreen() {
             <BillRow label="Subtotal" paise={order.subtotalPaise} />
             <BillRow label="Delivery fee" paise={order.deliveryFeePaise} />
             <View className="mt-2 flex-row items-center justify-between">
-              <AppText family="jakarta" weight="extrabold" className="text-[15px] text-ink">
+              <AppText family="display" weight="extrabold" className="text-[15px] text-ink">
                 Total
               </AppText>
               <PriceText paise={order.totalPaise} size="total" fractionDigits={2} />
@@ -116,7 +116,7 @@ export default function OrderConfirmationScreen() {
       </ScrollView>
       {persistError ? (
         <View className="mx-5 mb-2 rounded-xl border border-line bg-white px-4 py-3" accessibilityRole="alert">
-          <AppText family="inter" weight="regular" className="text-[13px] leading-5 text-secondary">
+          <AppText family="body" weight="regular" className="text-[13px] leading-5 text-secondary">
             {persistError}
           </AppText>
         </View>
@@ -156,10 +156,10 @@ export default function OrderConfirmationScreen() {
 function Fact({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
   return (
     <View className={last ? "py-2" : "border-b border-line py-2"}>
-      <AppText family="inter" weight="regular" className="text-[11px] text-muted">
+      <AppText family="body" weight="regular" className="text-[11px] text-muted">
         {label}
       </AppText>
-      <AppText family="inter" weight="semibold" className="mt-0.5 text-[14px] text-ink">
+      <AppText family="body" weight="semibold" className="mt-0.5 text-[14px] text-ink">
         {value}
       </AppText>
     </View>
@@ -169,7 +169,7 @@ function Fact({ label, value, last = false }: { label: string; value: string; la
 function BillRow({ label, paise }: { label: string; paise: number }) {
   return (
     <View className="mb-1.5 flex-row items-center justify-between">
-      <AppText family="inter" weight="regular" className="text-[13px] text-secondary">
+      <AppText family="body" weight="regular" className="text-[13px] text-secondary">
         {label}
       </AppText>
       <PriceText paise={paise} fractionDigits={2} />

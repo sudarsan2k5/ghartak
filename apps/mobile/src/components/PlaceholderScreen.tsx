@@ -21,7 +21,7 @@ export function PlaceholderScreen({ title, showBack = false, next, children }: P
       <PageHeader variant="title" title={title} {...(showBack ? { onBack: () => router.back() } : {})} />
       <View className="flex-1 justify-center gap-6 px-8">
         {children}
-        <AppText family="inter" weight="regular" className="text-center text-[14px] leading-6 text-secondary">
+        <AppText family="body" weight="regular" className="text-center text-[14px] leading-6 text-secondary">
           This screen is on the navigation map. Its layout is not part of the home milestone.
         </AppText>
         {next ? (

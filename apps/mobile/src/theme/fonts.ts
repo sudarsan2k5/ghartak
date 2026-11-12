@@ -1,11 +1,11 @@
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  Inter_800ExtraBold,
-  Inter_900Black,
-} from "@expo-google-fonts/inter";
+  Figtree_400Regular,
+  Figtree_500Medium,
+  Figtree_600SemiBold,
+  Figtree_700Bold,
+  Figtree_800ExtraBold,
+  Figtree_900Black,
+} from "@expo-google-fonts/figtree";
 import {
   NotoSansDevanagari_400Regular,
   NotoSansDevanagari_500Medium,
@@ -23,25 +23,27 @@ import {
   NotoSansOriya_900Black,
 } from "@expo-google-fonts/noto-sans-oriya";
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-} from "@expo-google-fonts/plus-jakarta-sans";
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_800ExtraBold,
+  Outfit_900Black,
+} from "@expo-google-fonts/outfit";
 
 export const fontAssets = {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  Inter_800ExtraBold,
-  Inter_900Black,
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
+  Figtree_400Regular,
+  Figtree_500Medium,
+  Figtree_600SemiBold,
+  Figtree_700Bold,
+  Figtree_800ExtraBold,
+  Figtree_900Black,
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_800ExtraBold,
+  Outfit_900Black,
   NotoSansDevanagari_400Regular,
   NotoSansDevanagari_500Medium,
   NotoSansDevanagari_600SemiBold,
@@ -56,25 +58,26 @@ export const fontAssets = {
   NotoSansOriya_900Black,
 } as const;
 
-export type TextFamily = "inter" | "jakarta";
+/** `body` is Figtree, for running text, prices, and controls. `display` is Outfit, for headings and labels. */
+export type TextFamily = "body" | "display";
 export type TextWeight = "regular" | "medium" | "semibold" | "bold" | "extrabold" | "black";
 
-const interFaces: Record<TextWeight, string> = {
-  regular: "Inter_400Regular",
-  medium: "Inter_500Medium",
-  semibold: "Inter_600SemiBold",
-  bold: "Inter_700Bold",
-  extrabold: "Inter_800ExtraBold",
-  black: "Inter_900Black",
+const bodyFaces: Record<TextWeight, string> = {
+  regular: "Figtree_400Regular",
+  medium: "Figtree_500Medium",
+  semibold: "Figtree_600SemiBold",
+  bold: "Figtree_700Bold",
+  extrabold: "Figtree_800ExtraBold",
+  black: "Figtree_900Black",
 };
 
-const jakartaFaces: Record<TextWeight, string> = {
-  regular: "PlusJakartaSans_400Regular",
-  medium: "PlusJakartaSans_500Medium",
-  semibold: "PlusJakartaSans_600SemiBold",
-  bold: "PlusJakartaSans_700Bold",
-  extrabold: "PlusJakartaSans_800ExtraBold",
-  black: "PlusJakartaSans_800ExtraBold",
+const displayFaces: Record<TextWeight, string> = {
+  regular: "Outfit_400Regular",
+  medium: "Outfit_500Medium",
+  semibold: "Outfit_600SemiBold",
+  bold: "Outfit_700Bold",
+  extrabold: "Outfit_800ExtraBold",
+  black: "Outfit_900Black",
 };
 
 const devanagariFaces: Record<TextWeight, string> = {
@@ -98,6 +101,7 @@ const oriyaFaces: Record<TextWeight, string> = {
 const devanagari = /[\u0900-\u097F]/;
 const oriya = /[\u0B00-\u0B7F]/;
 
+/** The face for this text, switching to Noto for Hindi and Odia, which the Latin fonts do not cover. */
 export function fontFamilyFor(text: string, family: TextFamily, weight: TextWeight): string {
   if (devanagari.test(text)) {
     return devanagariFaces[weight];
@@ -105,5 +109,5 @@ export function fontFamilyFor(text: string, family: TextFamily, weight: TextWeig
   if (oriya.test(text)) {
     return oriyaFaces[weight];
   }
-  return family === "jakarta" ? jakartaFaces[weight] : interFaces[weight];
+  return family === "display" ? displayFaces[weight] : bodyFaces[weight];
 }

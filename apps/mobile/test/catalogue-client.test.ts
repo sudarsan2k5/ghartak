@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { apiBaseUrl, imageBaseUrl } from "../src/api/config.ts";
 import { resolveCatalogueImage } from "../src/api/images.ts";
-import { stockLabel } from "../src/catalogue/display.ts";
+import { stockLabel, toCardProduct } from "../src/catalogue/display.ts";
 
 describe("catalogue client configuration", () => {
   it("uses the Android emulator host instead of localhost", () => {
@@ -53,5 +53,28 @@ describe("catalogue client configuration", () => {
   it("labels zero stock as not purchasable", () => {
     assert.equal(stockLabel({ quantity: 0, purchasable: false }), "Out of stock");
     assert.equal(stockLabel({ quantity: 40, purchasable: true }), "40 in stock");
+  });
+});
+
+describe("product display", () => {
+  const product = {
+    id: "00000000-0000-4000-8000-000000000001",
+    name: "Figaro Extra Virgin Olive Oil",
+    brand: "Figaro",
+    descriptionSummary: "Cold pressed",
+    packageLabel: "1 pc (250 ml)",
+    category: { name: "Staples" },
+    pricePaise: 45000,
+    mrpPaise: 50000,
+    stock: { purchasable: true },
+    primaryImage: null,
+  };
+
+  it("keeps the brand and description off the product card", () => {
+    const card = toCardProduct(product);
+    assert.equal(card.name, "Figaro Extra Virgin Olive Oil");
+    assert.equal(card.unit, "1 pc (250 ml)");
+    assert.equal(Object.values(card).includes("Figaro"), false);
+    assert.equal(Object.values(card).includes("Cold pressed"), false);
   });
 });

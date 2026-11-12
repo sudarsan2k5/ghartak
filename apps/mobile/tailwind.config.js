@@ -12,6 +12,7 @@ module.exports = {
         muted: "#837B86",
         secondary: "#665D6C",
         savings: "#527527",
+        "savings-wash": "#EEF6DC",
       },
       boxShadow: {
         card: "0 2px 8 rgba(53, 32, 60, 0.05)",

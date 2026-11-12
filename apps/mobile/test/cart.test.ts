@@ -13,7 +13,7 @@ import {
   setQuantity,
 } from "../src/cart/operations.ts";
 import { persistCart, restoreCart } from "../src/cart/persist.ts";
-import { assessCartLine, canCheckout, checkoutBlockReason, subtotalPaise } from "../src/cart/quotes.ts";
+import { assessCartLine, canCheckout, checkoutBlockReason, savingsPaise, subtotalPaise } from "../src/cart/quotes.ts";
 import type { CartOffer } from "../src/cart/types.ts";
 import {
   basketBarView,
@@ -35,6 +35,7 @@ function offer(overrides: Partial<CartOffer> = {}): CartOffer {
     packageLabel: "1 kg",
     deliveryPath: "/catalog/dal.jpg",
     pricePaise: 12000,
+    mrpPaise: null,
     stock: { quantity: 40, availability: "available", purchasable: true },
     ...overrides,
   };
@@ -404,3 +405,20 @@ function catalogue() {
     primaryImage: null,
   };
 }
+
+describe("cart savings", () => {
+  const available = { kind: "available" as const, pricePaise: 12000, stockQuantity: 40 };
+
+  it("counts MRP savings only for confirmed lines priced below MRP", () => {
+    assert.equal(
+      savingsPaise([
+        { quantity: 2, status: available, mrpPaise: 15000 },
+        { quantity: 1, status: available, mrpPaise: null },
+        { quantity: 3, status: available, mrpPaise: 12000 },
+        { quantity: 1, status: { kind: "loading" }, mrpPaise: 99999 },
+        { quantity: 1, status: { kind: "unavailable", message: "Gone" }, mrpPaise: 99999 },
+      ]),
+      6000,
+    );
+  });
+});

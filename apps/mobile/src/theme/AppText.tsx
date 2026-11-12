@@ -8,7 +8,7 @@ type AppTextProps = TextProps & {
 };
 
 export function AppText({
-  family = "inter",
+  family = "body",
   weight = "regular",
   className,
   style,

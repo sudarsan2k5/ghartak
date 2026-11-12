@@ -1,7 +1,7 @@
 import type { CatalogueProductSort } from "@ghartak/contracts";
 import { FlashList } from "@shopify/flash-list";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowDownUp, Check } from "lucide-react-native";
+import { ArrowDownUp, Check, PackageOpen, RefreshCw } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Modal, Pressable, RefreshControl, ScrollView, useWindowDimensions, View } from "react-native";
 
@@ -9,9 +9,9 @@ import { BasketBar } from "@/components/BasketBar";
 import { CatalogueImage } from "@/components/CatalogueImage";
 import { CatalogueProductCard } from "@/components/CatalogueProductCard";
 import { CatalogueStatus } from "@/components/CatalogueStatus";
-import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { PageHeader } from "@/components/PageHeader";
 import { ScreenContainer } from "@/components/ScreenContainer";
+import { ProductGridSkeleton } from "@/components/Skeleton";
 import { SearchBar } from "@/components/SearchBar";
 import { sortOptions } from "@/catalogue/display";
 import { locationSubtitle, placeholderLocation } from "@/location/placeholder-location";
@@ -125,13 +125,13 @@ export default function CategoryBrowseScreen() {
                     {row.imageDeliveryPath ? (
                       <CatalogueImage deliveryPath={row.imageDeliveryPath} alt={row.name} />
                     ) : (
-                      <AppText family="jakarta" weight="extrabold" className="text-[16px] text-ink">
+                      <AppText family="display" weight="extrabold" className="text-[16px] text-ink">
                         {row.name.trim().slice(0, 1).toUpperCase()}
                       </AppText>
                     )}
                   </View>
                   <AppText
-                    family="inter"
+                    family="body"
                     weight={selected ? "extrabold" : "regular"}
                     numberOfLines={2}
                     className="mt-1 text-center text-[10px] leading-[1.2] text-ink"
@@ -145,10 +145,10 @@ export default function CategoryBrowseScreen() {
           <View className="min-h-0 flex-1">
             <View className="flex-row items-center justify-between gap-2 px-2.5 py-2.5">
               <View className="min-w-0 flex-1">
-                <AppText family="jakarta" weight="extrabold" numberOfLines={1} className="text-[16px] text-ink">
+                <AppText family="display" weight="extrabold" numberOfLines={1} className="text-[16px] text-ink">
                   {title}
                 </AppText>
-                <AppText family="inter" weight="regular" className="text-[10px] text-muted">
+                <AppText family="body" weight="regular" className="text-[10px] text-muted">
                   {products.data ? `${total} ${total === 1 ? "product" : "products"}` : " "}
                 </AppText>
               </View>
@@ -161,7 +161,7 @@ export default function CategoryBrowseScreen() {
                 }}
                 className={`h-8 justify-center rounded-lg border px-2 ${inStock ? "border-ink bg-lime" : "border-line bg-white"}`}
               >
-                <AppText family="inter" weight="semibold" className="text-[11px] text-ink">
+                <AppText family="body" weight="semibold" className="text-[11px] text-ink">
                   In stock
                 </AppText>
               </Pressable>
@@ -174,14 +174,17 @@ export default function CategoryBrowseScreen() {
                 className="h-8 flex-row items-center gap-1 rounded-lg border border-line bg-white px-2"
               >
                 <ArrowDownUp color={colors.ink} size={12} strokeWidth={2.2} />
-                <AppText family="inter" weight="semibold" className="text-[11px] text-ink">
+                <AppText family="body" weight="semibold" className="text-[11px] text-ink">
                   Sort
                 </AppText>
               </Pressable>
             </View>
-            {products.isPending ? <LoadingIndicator /> : null}
+            {products.isPending ? (
+              <ProductGridSkeleton width={productWidth} count={4} gap={gridGap} paddingHorizontal={gridPadding} />
+            ) : null}
             {products.isError ? (
               <CatalogueStatus
+                icon={RefreshCw}
                 title="Products could not be loaded."
                 actionLabel="Try again"
                 onAction={() => {
@@ -190,7 +193,11 @@ export default function CategoryBrowseScreen() {
               />
             ) : null}
             {products.data && items.length === 0 ? (
-              <CatalogueStatus title={search || inStock ? "No products match." : "Nothing is listed in this category yet."} />
+              <CatalogueStatus
+                icon={PackageOpen}
+                title={search || inStock ? "No products match" : "Nothing here yet"}
+                body={search || inStock ? "Try clearing the filters." : "New products for this category will show up here."}
+              />
             ) : null}
             {items.length > 0 ? (
               <View className="min-h-0 flex-1">
@@ -243,7 +250,7 @@ export default function CategoryBrowseScreen() {
           }}
         >
           <View className="rounded-t-[18px] bg-white px-5 pb-8 pt-4">
-            <AppText family="jakarta" weight="extrabold" className="mb-2 text-[16px] text-ink">
+            <AppText family="display" weight="extrabold" className="mb-2 text-[16px] text-ink">
               Sort by
             </AppText>
             {sortOptions.map((option) => (
@@ -257,7 +264,7 @@ export default function CategoryBrowseScreen() {
                 }}
                 className="h-12 flex-row items-center justify-between"
               >
-                <AppText family="inter" weight={sort === option.value ? "extrabold" : "regular"} className="text-[14px] text-ink">
+                <AppText family="body" weight={sort === option.value ? "extrabold" : "regular"} className="text-[14px] text-ink">
                   {option.label}
                 </AppText>
                 {sort === option.value ? <Check color={colors.ink} size={18} strokeWidth={2.4} /> : null}

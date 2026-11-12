@@ -37,22 +37,18 @@ export function ProductCard({
         <CatalogueImage deliveryPath={product.deliveryPath} alt={product.imageAlt} />
         {product.discountPercent ? (
           <View className="absolute left-0 top-0 rounded-md bg-lime px-1.5 py-0.5">
-            <AppText family="inter" weight="extrabold" className="text-[9px] text-ink">
+            <AppText family="body" weight="extrabold" className="text-[9px] text-ink">
               {`${product.discountPercent}% OFF`}
             </AppText>
           </View>
         ) : null}
       </View>
       <View className="mt-[7px] gap-[7px]">
-        <View>
-          <AppText family="inter" weight="extrabold" className="text-[12px] text-ink" numberOfLines={1}>
-            {product.name}
-          </AppText>
-          <AppText family="inter" weight="extrabold" className="text-[12px] text-ink" numberOfLines={1}>
-            {product.detail}
-          </AppText>
-        </View>
-        <AppText family="inter" weight="regular" className="text-[10px] text-muted" numberOfLines={1}>
+        {/* Two lines tall even for short names, so cards in a row line up. */}
+        <AppText family="body" weight="extrabold" className="min-h-[32px] text-[12px] leading-4 text-ink" numberOfLines={2}>
+          {product.name}
+        </AppText>
+        <AppText family="body" weight="regular" className="text-[10px] text-muted" numberOfLines={1}>
           {product.unit}
         </AppText>
         <View className="flex-row flex-wrap items-end justify-between gap-y-1.5">
@@ -63,7 +59,7 @@ export function ProductCard({
           {product.purchasable && !unavailableLabel ? (
             <QuantitySelector quantity={quantity} maxQuantity={maxQuantity} onChange={onQuantityChange} />
           ) : (
-            <AppText family="inter" weight="semibold" className="text-[10px] text-secondary">
+            <AppText family="body" weight="semibold" className="text-[10px] text-secondary">
               {unavailableLabel ?? "Out of stock"}
             </AppText>
           )}

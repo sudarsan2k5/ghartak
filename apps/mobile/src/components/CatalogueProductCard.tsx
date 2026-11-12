@@ -6,6 +6,7 @@ import { useCartQuantity } from "@/cart/use-cart-lines";
 import { productCardCartMode } from "@/cart/view";
 import { toCardProduct } from "@/catalogue/display";
 import { ProductCard } from "@/components/ProductCard";
+import { warnCartRefused } from "@/feedback/haptics";
 import { useCartStore } from "@/state/cart";
 
 type CatalogueProductCardProps = {
@@ -30,7 +31,10 @@ export function CatalogueProductCard({ product, width }: CatalogueProductCardPro
         router.push({ pathname: "/product/[id]", params: { id: product.id } });
       }}
       onQuantityChange={(next) => {
-        applyItemQuantity(offerFromCatalogue(product), next);
+        const result = applyItemQuantity(offerFromCatalogue(product), next);
+        if (!result.ok) {
+          warnCartRefused();
+        }
       }}
     />
   );

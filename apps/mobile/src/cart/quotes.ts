@@ -3,7 +3,7 @@ import type { CatalogueProductSummary, ProductDetailResponse } from "@ghartak/co
 import type { CartItem, CartLineStatus, CartOffer } from "./types";
 
 export function offerFromCatalogue(
-  product: Pick<CatalogueProductSummary, "id" | "name" | "packageLabel" | "pricePaise" | "stock" | "primaryImage">,
+  product: Pick<CatalogueProductSummary, "id" | "name" | "packageLabel" | "pricePaise" | "mrpPaise" | "stock" | "primaryImage">,
 ): CartOffer {
   return {
     id: product.id,
@@ -11,6 +11,7 @@ export function offerFromCatalogue(
     packageLabel: product.packageLabel,
     deliveryPath: product.primaryImage?.deliveryPath ?? null,
     pricePaise: product.pricePaise,
+    mrpPaise: product.mrpPaise ?? null,
     stock: product.stock,
   };
 }
@@ -58,6 +59,23 @@ export function subtotalPaise(lines: readonly { quantity: number; status: CartLi
   for (const line of lines) {
     if (line.status.kind === "available" || line.status.kind === "over_stock") {
       total += line.status.pricePaise * line.quantity;
+    }
+  }
+  return total;
+}
+
+/**
+ * How much the customer saves against MRP, counting only lines whose live price is confirmed.
+ * Lines without an MRP, or priced at or above it, add nothing.
+ */
+export function savingsPaise(lines: readonly { quantity: number; status: CartLineStatus; mrpPaise: number | null }[]): number {
+  let total = 0;
+  for (const line of lines) {
+    if ((line.status.kind === "available" || line.status.kind === "over_stock") && line.mrpPaise !== null) {
+      const perItem = line.mrpPaise - line.status.pricePaise;
+      if (perItem > 0) {
+        total += perItem * line.quantity;
+      }
     }
   }
   return total;

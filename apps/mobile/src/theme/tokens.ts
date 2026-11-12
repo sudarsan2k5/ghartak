@@ -7,6 +7,7 @@ export const colors = {
   muted: "#837B86",
   secondary: "#665D6C",
   savings: "#527527",
+  savingsWash: "#EEF6DC",
 } as const;
 
 export const space = {

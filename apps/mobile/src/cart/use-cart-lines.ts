@@ -4,7 +4,7 @@ import { getProduct } from "@/api/client";
 import { catalogueKeys } from "@/query/catalogue";
 import { useCartStore } from "@/state/cart";
 import { itemCount } from "./operations";
-import { assessCartLine, canCheckout, checkoutBlockReason, offerFromCatalogue, subtotalPaise } from "./quotes";
+import { assessCartLine, canCheckout, checkoutBlockReason, offerFromCatalogue, savingsPaise, subtotalPaise } from "./quotes";
 import type { CartItem, CartLineStatus, CartOffer } from "./types";
 import { quantityForProduct } from "./view";
 
@@ -19,6 +19,7 @@ export function useCartLines(): {
   lines: CartLine[];
   itemCount: number;
   subtotalPaise: number;
+  savingsPaise: number;
   canCheckout: boolean;
   checkoutBlockReason: string | null;
   isConfirming: boolean;
@@ -52,6 +53,9 @@ export function useCartLines(): {
     lines,
     itemCount: itemCount(items),
     subtotalPaise: subtotalPaise(lines.map((line) => ({ quantity: line.item.quantity, status: line.status }))),
+    savingsPaise: savingsPaise(
+      lines.map((line) => ({ quantity: line.item.quantity, status: line.status, mrpPaise: line.offer?.mrpPaise ?? null })),
+    ),
     canCheckout: canCheckout(lines),
     checkoutBlockReason: checkoutBlockReason(lines),
     isConfirming: lines.some((line) => line.status.kind === "loading"),

@@ -4,13 +4,14 @@ import { RefreshControl, ScrollView, useWindowDimensions, View } from "react-nat
 import { BasketBar } from "@/components/BasketBar";
 import { CatalogueStatus } from "@/components/CatalogueStatus";
 import { CategoryCard } from "@/components/CategoryCard";
-import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { PageHeader } from "@/components/PageHeader";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SearchBar } from "@/components/SearchBar";
+import { CategoryGridSkeleton } from "@/components/Skeleton";
 import { placeholderLocation } from "@/location/placeholder-location";
 import { homeChrome } from "@/presentation/home";
 import { useCategories } from "@/query/catalogue";
+import { LayoutGrid, RefreshCw } from "lucide-react-native";
 
 const columns = 3;
 
@@ -33,9 +34,10 @@ export default function CategoriesScreen() {
             }}
           />
         </View>
-        {categories.isPending ? <LoadingIndicator /> : null}
+        {categories.isPending ? <CategoryGridSkeleton tileWidth={tileWidth} /> : null}
         {categories.isError ? (
           <CatalogueStatus
+            icon={RefreshCw}
             title="Categories could not be loaded."
             actionLabel="Try again"
             onAction={() => {
@@ -44,7 +46,7 @@ export default function CategoriesScreen() {
           />
         ) : null}
         {categories.data && categories.data.categories.length === 0 ? (
-          <CatalogueStatus title="No categories are available yet." />
+          <CatalogueStatus icon={LayoutGrid} title="No categories yet" body="Categories will appear here as soon as they are added." />
         ) : null}
         {categories.data && categories.data.categories.length > 0 ? (
           <ScrollView

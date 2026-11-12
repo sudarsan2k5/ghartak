@@ -169,16 +169,16 @@ export default function OrderTrackingScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="mt-2 rounded-[18px] border border-ink bg-[#F1F9DA] px-4 py-5">
-            <AppText family="inter" weight="extrabold" className="text-[11px] uppercase text-secondary">
+            <AppText family="body" weight="extrabold" className="text-[11px] uppercase text-secondary">
               {orderNumber}
             </AppText>
-            <AppText family="jakarta" weight="extrabold" className="mt-2 text-[24px] text-ink">
+            <AppText family="display" weight="extrabold" className="mt-2 text-[24px] text-ink">
               {trackingStatusHeading(result.order.status)}
             </AppText>
-            <AppText family="inter" weight="regular" className="mt-2 text-[14px] leading-6 text-secondary">
+            <AppText family="body" weight="regular" className="mt-2 text-[14px] leading-6 text-secondary">
               {trackingStatusExplanation(result.order.status)}
             </AppText>
-            <AppText family="inter" weight="semibold" className="mt-3 text-[13px] text-ink">
+            <AppText family="body" weight="semibold" className="mt-3 text-[13px] text-ink">
               {trackingStatusLabel(result.order.status)}
             </AppText>
           </View>
@@ -195,7 +195,7 @@ export default function OrderTrackingScreen() {
             <Timeline steps={buildTrackingTimeline(result.order)} />
           )}
 
-          <AppText family="inter" weight="regular" className="mt-4 text-[12px] text-muted">
+          <AppText family="body" weight="regular" className="mt-4 text-[12px] text-muted">
             {`${trackingCopy.lastUpdated} ${formatTrackingTime(result.order.updatedAt)}`}
           </AppText>
         </ScrollView>
@@ -215,7 +215,7 @@ export default function OrderTrackingScreen() {
           }`}
         >
           <RefreshCw color={colors.ink} size={18} strokeWidth={2.2} />
-          <AppText family="jakarta" weight="bold" className="text-[16px] text-ink">
+          <AppText family="display" weight="bold" className="text-[16px] text-ink">
             {refreshing ? trackingCopy.refreshing : trackingCopy.refresh}
           </AppText>
         </Pressable>
@@ -237,14 +237,14 @@ function Timeline({ steps }: { steps: TimelineStep[] }) {
           </View>
           <View className={`ml-3 flex-1 ${index < steps.length - 1 ? "pb-4" : ""}`}>
             <AppText
-              family="inter"
+              family="body"
               weight={step.state === "current" ? "extrabold" : step.state === "complete" ? "semibold" : "regular"}
               className={`text-[14px] ${step.state === "pending" ? "text-muted" : "text-ink"}`}
             >
               {step.label}
             </AppText>
             {step.occurredAt ? (
-              <AppText family="inter" weight="regular" className="mt-0.5 text-[12px] text-secondary">
+              <AppText family="body" weight="regular" className="mt-0.5 text-[12px] text-secondary">
                 {formatTrackingTime(step.occurredAt)}
               </AppText>
             ) : null}
@@ -278,17 +278,17 @@ function CancelledHistory({
 }) {
   return (
     <View className="mt-4 rounded-[18px] border border-line bg-white px-4 py-4">
-      <AppText family="jakarta" weight="extrabold" className="text-[16px] text-ink">
+      <AppText family="display" weight="extrabold" className="text-[16px] text-ink">
         {trackingStatusLabel("cancelled")}
       </AppText>
       {at ? (
-        <AppText family="inter" weight="regular" className="mt-1 text-[12px] text-secondary">
+        <AppText family="body" weight="regular" className="mt-1 text-[12px] text-secondary">
           {formatTrackingTime(at)}
         </AppText>
       ) : null}
       <View className="mt-3">
         {events.map((event) => (
-          <AppText key={`${event.label}-${event.at}`} family="inter" weight="regular" className="py-1 text-[13px] text-secondary">
+          <AppText key={`${event.label}-${event.at}`} family="body" weight="regular" className="py-1 text-[13px] text-secondary">
             {`${event.label} · ${formatTrackingTime(event.at)}`}
           </AppText>
         ))}

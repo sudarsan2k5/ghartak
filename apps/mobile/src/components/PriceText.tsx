@@ -20,7 +20,7 @@ export function PriceText({
   const colorClass = struck ? "text-muted" : tone === "white" ? "text-white" : "text-ink";
   return (
     <AppText
-      family="inter"
+      family="body"
       weight={struck ? "regular" : "extrabold"}
       className={`${sizeClass} ${colorClass} ${struck ? "line-through" : ""}`}
     >

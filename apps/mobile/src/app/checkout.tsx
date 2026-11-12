@@ -22,6 +22,7 @@ import { useCartStore } from "@/state/cart";
 import { AppText } from "@/theme/AppText";
 import { formatRupees } from "@/theme/money";
 import { colors } from "@/theme/tokens";
+import { confirmSuccess } from "@/feedback/haptics";
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -81,6 +82,7 @@ export default function CheckoutScreen() {
         for (const productId of productIds) {
           void queryClient.invalidateQueries({ queryKey: catalogueKeys.product(productId) });
         }
+        confirmSuccess();
         router.replace("/order-confirmation");
         return;
       }
@@ -111,10 +113,10 @@ export default function CheckoutScreen() {
         <PageHeader variant="title" title={guestCheckoutCopy.title} onBack={() => router.back()} />
         {!readiness.ready ? (
           <View className="flex-1 px-5 pt-4">
-            <AppText family="jakarta" weight="extrabold" className="text-[22px] text-ink">
+            <AppText family="display" weight="extrabold" className="text-[22px] text-ink">
               {guestCheckoutCopy.notReady}
             </AppText>
-            <AppText family="inter" weight="regular" className="mt-3 text-[14px] leading-6 text-secondary">
+            <AppText family="body" weight="regular" className="mt-3 text-[14px] leading-6 text-secondary">
               {readiness.reason}
             </AppText>
             <View className="mt-6">
@@ -129,10 +131,10 @@ export default function CheckoutScreen() {
               contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 28 }}
               showsVerticalScrollIndicator={false}
             >
-              <AppText family="inter" weight="bold" className="mt-1 text-[11px] uppercase text-secondary">
+              <AppText family="body" weight="bold" className="mt-1 text-[11px] uppercase text-secondary">
                 {guestCheckoutCopy.eyebrow}
               </AppText>
-              <AppText family="inter" weight="regular" className="mt-2 text-[14px] leading-6 text-secondary">
+              <AppText family="body" weight="regular" className="mt-2 text-[14px] leading-6 text-secondary">
                 {guestCheckoutCopy.body}
               </AppText>
 
@@ -171,10 +173,10 @@ export default function CheckoutScreen() {
                     <Banknote color={colors.ink} size={20} strokeWidth={2.2} />
                   </View>
                   <View className="flex-1">
-                    <AppText family="jakarta" weight="extrabold" className="text-[15px] text-ink">
+                    <AppText family="display" weight="extrabold" className="text-[15px] text-ink">
                       Cash on Delivery
                     </AppText>
-                    <AppText family="inter" weight="regular" className="mt-1 text-[12px] leading-5 text-secondary">
+                    <AppText family="body" weight="regular" className="mt-1 text-[12px] leading-5 text-secondary">
                       {guestCheckoutCopy.payOnDelivery}
                     </AppText>
                   </View>
@@ -185,10 +187,10 @@ export default function CheckoutScreen() {
                 {cart.lines.map((line) => (
                   <View key={line.item.productId} className="flex-row items-start justify-between gap-3 py-2">
                     <View className="min-w-0 flex-1">
-                      <AppText family="inter" weight="bold" className="text-[13px] text-ink">
+                      <AppText family="body" weight="bold" className="text-[13px] text-ink">
                         {line.offer?.name ?? line.item.display?.name ?? "Product"}
                       </AppText>
-                      <AppText family="inter" weight="regular" className="mt-0.5 text-[11px] text-muted">
+                      <AppText family="body" weight="regular" className="mt-0.5 text-[11px] text-muted">
                         {line.status.kind === "available"
                           ? `Qty ${line.item.quantity} · ${formatRupees(line.status.pricePaise, { fractionDigits: 2 })} each`
                           : `Qty ${line.item.quantity}`}
@@ -199,9 +201,22 @@ export default function CheckoutScreen() {
                     ) : null}
                   </View>
                 ))}
-                <View className="mt-2 border-t border-line pt-3">
+                <View className="mt-2 gap-2 border-t border-line pt-3">
+                  {cart.savingsPaise > 0 && readiness.subtotalPaise !== null ? (
+                    <Row label="Item total (MRP)" value={readiness.subtotalPaise + cart.savingsPaise} />
+                  ) : null}
+                  {cart.savingsPaise > 0 ? (
+                    <View className="flex-row items-center justify-between">
+                      <AppText family="body" weight="regular" className="text-[13px] text-savings">
+                        You save on MRP
+                      </AppText>
+                      <AppText family="body" weight="bold" className="text-[13px] text-savings">
+                        {`−${formatRupees(cart.savingsPaise, { fractionDigits: 2 })}`}
+                      </AppText>
+                    </View>
+                  ) : null}
                   <Row label="Subtotal" value={readiness.subtotalPaise} />
-                  <AppText family="inter" weight="regular" className="mt-2 text-[12px] leading-5 text-secondary">
+                  <AppText family="body" weight="regular" className="mt-2 text-[12px] leading-5 text-secondary">
                     {guestCheckoutCopy.deliveryPending}
                   </AppText>
                 </View>
@@ -209,7 +224,7 @@ export default function CheckoutScreen() {
 
               {submitError ? (
                 <View className="mt-4 rounded-xl border border-line bg-white px-4 py-3" accessibilityRole="alert">
-                  <AppText family="inter" weight="regular" className="text-[13px] leading-5 text-secondary">
+                  <AppText family="body" weight="regular" className="text-[13px] leading-5 text-secondary">
                     {submitError}
                   </AppText>
                 </View>
@@ -224,7 +239,7 @@ export default function CheckoutScreen() {
                   void onPlaceOrder();
                 }}
               />
-              <AppText family="inter" weight="regular" className="text-center text-[11px] text-muted">
+              <AppText family="body" weight="regular" className="text-center text-[11px] text-muted">
                 Cash on delivery · Pay when it arrives
               </AppText>
             </View>
@@ -238,7 +253,7 @@ export default function CheckoutScreen() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View className="mt-5 rounded-[18px] border border-line bg-white px-4 py-4">
-      <AppText family="jakarta" weight="extrabold" className="mb-3 text-[16px] text-ink">
+      <AppText family="display" weight="extrabold" className="mb-3 text-[16px] text-ink">
         {title}
       </AppText>
       {children}
@@ -249,7 +264,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Row({ label, value }: { label: string; value: number | null }) {
   return (
     <View className="flex-row items-center justify-between">
-      <AppText family="inter" weight="regular" className="text-[13px] text-secondary">
+      <AppText family="body" weight="regular" className="text-[13px] text-secondary">
         {label}
       </AppText>
       {value !== null ? <PriceText paise={value} fractionDigits={2} /> : null}
@@ -280,7 +295,7 @@ function Field({
 }) {
   return (
     <View className="mb-3">
-      <AppText family="inter" weight="semibold" className="mb-1.5 text-[12px] text-secondary">
+      <AppText family="body" weight="semibold" className="mb-1.5 text-[12px] text-secondary">
         {label}
       </AppText>
       <TextInput
@@ -297,11 +312,11 @@ function Field({
         className={`rounded-xl border bg-page px-3.5 text-[14px] text-ink ${multiline ? "h-[108px] py-3" : "h-[48px]"} ${
           error ? "border-ink" : "border-line"
         }`}
-        style={{ fontFamily: "Inter_400Regular" }}
+        style={{ fontFamily: "Figtree_400Regular" }}
         placeholderTextColor={colors.muted}
       />
       {error ? (
-        <AppText family="inter" weight="regular" className="mt-1.5 text-[12px] leading-5 text-secondary">
+        <AppText family="body" weight="regular" className="mt-1.5 text-[12px] leading-5 text-secondary">
           {error}
         </AppText>
       ) : null}

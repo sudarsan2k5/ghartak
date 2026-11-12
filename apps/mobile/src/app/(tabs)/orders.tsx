@@ -60,13 +60,13 @@ export default function OrdersScreen() {
               }}
               className="mb-3 rounded-[18px] border border-line bg-white px-4 py-4"
             >
-              <AppText family="jakarta" weight="extrabold" className="text-[16px] text-ink">
+              <AppText family="display" weight="extrabold" className="text-[16px] text-ink">
                 {order.orderNumber}
               </AppText>
-              <AppText family="inter" weight="regular" className="mt-1 text-[12px] text-secondary">
+              <AppText family="body" weight="regular" className="mt-1 text-[12px] text-secondary">
                 {`Saved ${formatTrackingTime(order.savedAt)}`}
               </AppText>
-              <AppText family="inter" weight="semibold" className="mt-2 text-[13px] text-ink">
+              <AppText family="body" weight="semibold" className="mt-2 text-[13px] text-ink">
                 {trackingCopy.trackAction}
               </AppText>
             </Pressable>

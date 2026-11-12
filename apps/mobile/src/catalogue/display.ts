@@ -1,7 +1,6 @@
 export type CatalogueCardProduct = {
   id: string;
   name: string;
-  detail: string;
   unit: string;
   pricePaise: number;
   mrpPaise: number | null;
@@ -30,8 +29,6 @@ export function stockLabel(stock: { quantity: number; purchasable: boolean }): s
 export function toCardProduct(product: {
   id: string;
   name: string;
-  brand: string | null;
-  descriptionSummary: string | null;
   packageLabel: string;
   pricePaise: number;
   mrpPaise?: number | null;
@@ -41,7 +38,6 @@ export function toCardProduct(product: {
   return {
     id: product.id,
     name: product.name,
-    detail: product.brand ?? product.descriptionSummary ?? "",
     unit: product.packageLabel,
     pricePaise: product.pricePaise,
     mrpPaise: product.mrpPaise ?? null,

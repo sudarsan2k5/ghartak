@@ -10,6 +10,8 @@ type SearchBarProps = {
   onClear?: () => void;
   editable?: boolean;
   onPress?: () => void;
+  autoFocus?: boolean;
+  onSubmit?: () => void;
 };
 
 export function SearchBar({
@@ -19,6 +21,8 @@ export function SearchBar({
   onClear,
   editable = false,
   onPress,
+  autoFocus = false,
+  onSubmit,
 }: SearchBarProps) {
   const field = (
     <View className="h-[46px] flex-row items-center rounded-xl border border-line bg-white px-3.5">
@@ -32,10 +36,12 @@ export function SearchBar({
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
         className="ml-2.5 flex-1 text-[14px] text-ink"
-        style={{ fontFamily: "Inter_400Regular" }}
+        style={{ fontFamily: "Figtree_400Regular" }}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
+        autoFocus={autoFocus}
+        onSubmitEditing={onSubmit}
       />
       {editable && value ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={onClear} hitSlop={8}>
