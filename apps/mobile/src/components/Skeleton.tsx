@@ -45,14 +45,15 @@ export function SkeletonBlock({
 /** Matches the product card's shape so the grid does not jump when products arrive. */
 export function ProductCardSkeleton({ width }: { width: number }) {
   return (
-    <View style={{ width }} className="rounded-xl border border-line bg-white p-2.5">
-      <SkeletonBlock width="100%" height={104} radius={10} />
-      <View className="mt-[7px] gap-[7px]">
-        <SkeletonBlock width="85%" height={12} />
-        <SkeletonBlock width="55%" height={12} />
-        <SkeletonBlock width="35%" height={10} />
-        <View className="flex-row items-end justify-between">
-          <SkeletonBlock width={44} height={16} />
+    <View style={{ width }} className="rounded-2xl border border-line bg-white p-2">
+      <SkeletonBlock width="100%" height={112} radius={12} />
+      <View className="mt-2 gap-1.5 px-0.5">
+        <SkeletonBlock width={58} height={16} radius={6} />
+        <SkeletonBlock width="90%" height={13} />
+        <SkeletonBlock width="60%" height={13} />
+        <SkeletonBlock width="35%" height={11} />
+        <View className="mt-1 flex-row items-end justify-between">
+          <SkeletonBlock width={44} height={30} />
           <SkeletonBlock width={76} height={32} />
         </View>
       </View>

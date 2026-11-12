@@ -13,7 +13,7 @@ import { ScreenContainer } from "@/components/ScreenContainer";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryRowSkeleton, ProductGridSkeleton, ProductRailSkeleton } from "@/components/Skeleton";
 import { placeholderLocation } from "@/location/placeholder-location";
-import { homeChrome } from "@/presentation/home";
+import { deliveryMinutes, homeChrome } from "@/presentation/home";
 import { useDailyTiles, useProductCatalogue } from "@/query/catalogue";
 import { AppText } from "@/theme/AppText";
 import { colors } from "@/theme/tokens";
@@ -65,7 +65,7 @@ export default function HomeScreen() {
           <View className="w-full max-w-[520px] self-center">
             <PageHeader
               variant="home"
-              etaLabel={homeChrome.etaLabel}
+              etaMinutes={deliveryMinutes}
               addressLabel={location.label}
               addressLine={location.line}
               onAccountPress={() => {

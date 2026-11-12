@@ -1,7 +1,12 @@
 import type { ImageSourcePropType } from "react-native";
 
+/** The delivery promise shown across the app. */
+export const deliveryMinutes = 15;
+
 export const homeChrome = {
-  etaLabel: "8 minutes",
+  etaLabel: `${deliveryMinutes} minutes`,
+  /** Short form for the chip on product cards. */
+  cardEtaLabel: `${deliveryMinutes} MINS`,
   searchPlaceholder: "Search for atta, milk, chips…",
   categoriesTitle: "Your daily everything",
   productsTitle: "On your daily list",

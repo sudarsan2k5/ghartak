@@ -28,7 +28,7 @@ export function QuantitySelector({ quantity, maxQuantity, onChange }: QuantitySe
         }}
         className={`h-8 min-w-[76px] flex-row items-center justify-center rounded-lg border border-ink bg-white px-2.5 active:opacity-70 ${atMax ? "opacity-40" : ""}`}
       >
-        <AppText family="body" weight="extrabold" className="text-[12px] text-ink">
+        <AppText family="body" weight="extrabold" className="text-[12px] leading-[16px] text-ink">
           ADD +
         </AppText>
       </Pressable>
@@ -53,7 +53,7 @@ export function QuantitySelector({ quantity, maxQuantity, onChange }: QuantitySe
       </Pressable>
       {/* Keyed by the count so each change fades the new number in. */}
       <Animated.View key={quantity} entering={FadeIn.duration(180)}>
-        <AppText family="body" weight="extrabold" className="text-[13px] text-ink">
+        <AppText family="body" weight="extrabold" className="text-[13px] leading-[17px] text-ink">
           {String(quantity)}
         </AppText>
       </Animated.View>
