@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 
 import { CatalogueImage } from "@/components/CatalogueImage";
+import { DeliveryStrip } from "@/components/DeliveryStrip";
 import { PageHeader } from "@/components/PageHeader";
 import { PriceText } from "@/components/PriceText";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -15,8 +16,12 @@ import { useCartLines, type CartLine } from "@/cart/use-cart-lines";
 import { cartLinePresentation, checkoutReadiness } from "@/cart/view";
 import { catalogueKeys } from "@/query/catalogue";
 import { warnCartRefused } from "@/feedback/haptics";
+import { placeholderLocation } from "@/location/placeholder-location";
+import { deliveryMinutes } from "@/presentation/home";
 import { useCartStore } from "@/state/cart";
 import { AppText } from "@/theme/AppText";
+import { guestCheckoutCopy } from "@/cart/guest-checkout";
+import { discountPercent } from "@/catalogue/display";
 import { formatRupees } from "@/theme/money";
 import { colors } from "@/theme/tokens";
 
@@ -33,6 +38,7 @@ export default function CartScreen() {
   const applyItemQuantity = useCartStore((state) => state.applyItemQuantity);
   const remove = useCartStore((state) => state.remove);
   const clear = useCartStore((state) => state.clear);
+  const location = placeholderLocation();
 
   useFocusEffect(
     useCallback(() => {
@@ -72,8 +78,9 @@ export default function CartScreen() {
         />
       ) : (
         <>
-          <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-            <View className="mt-1 rounded-[18px] border border-line bg-white px-3.5 pt-3.5">
+          <DeliveryStrip minutes={deliveryMinutes} place={location.label} />
+          <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+            <View className="rounded-[18px] border border-line bg-white px-3.5 pt-3.5">
               <View className="mb-3 flex-row items-end justify-between px-0.5">
                 <AppText family="display" weight="extrabold" className="text-[16px] text-ink">
                   The everyday good stuff
@@ -122,57 +129,142 @@ export default function CartScreen() {
                 Clear cart
               </AppText>
             </Pressable>
-          </ScrollView>
-          <View className="border-t border-line bg-white px-5 pb-3 pt-4">
-            {readiness.ready && cart.savingsPaise > 0 ? (
-              <View className="mb-3 flex-row items-center justify-between rounded-lg bg-savings-wash px-3 py-2">
-                <AppText family="body" weight="semibold" className="text-[12px] text-savings">
-                  You save on MRP
-                </AppText>
-                <AppText family="body" weight="extrabold" className="text-[13px] text-savings">
-                  {formatRupees(cart.savingsPaise, { fractionDigits: 2 })}
-                </AppText>
-              </View>
-            ) : null}
-            <View className="mb-3 flex-row items-end justify-between">
-              <AppText family="body" weight="regular" className="text-[13px] text-secondary">
-                {`${itemCount} ${itemCount === 1 ? "item" : "items"}`}
-              </AppText>
-              <View className="items-end">
-                <AppText family="body" weight="regular" className="text-[11px] text-muted">
-                  Subtotal
-                </AppText>
-                {readiness.subtotalPaise !== null ? (
-                  <PriceText paise={readiness.subtotalPaise} size="total" fractionDigits={2} />
-                ) : (
-                  <AppText family="body" weight="semibold" className="text-[14px] text-secondary">
-                    {readiness.code === "confirming" ? "Checking prices" : "Price unavailable"}
-                  </AppText>
-                )}
-              </View>
-            </View>
-            <AppText family="body" weight="regular" className="mb-3 text-[12px] leading-5 text-secondary">
-              {readiness.ready
-                ? "Prices and stock are taken from the live catalogue. Delivery and offers are added at checkout."
-                : readiness.reason}
-            </AppText>
-            <PrimaryButton
-              label={
-                readiness.ready && readiness.subtotalPaise !== null
-                  ? `Proceed to checkout · ${formatRupees(readiness.subtotalPaise, { fractionDigits: 2 })}`
-                  : "Proceed to checkout"
-              }
-              disabled={!readiness.ready}
-              onPress={() => {
-                if (readiness.ready) {
-                  router.push("/checkout");
-                }
-              }}
+            <BillDetails
+              ready={readiness.subtotalPaise !== null}
+              subtotalPaise={readiness.subtotalPaise}
+              savingsPaise={cart.savingsPaise}
+              pendingLabel={readiness.code === "confirming" ? "Checking current prices…" : readiness.reason}
             />
+          </ScrollView>
+          {!readiness.ready && readiness.subtotalPaise !== null ? (
+            <View className="border-t border-line bg-white px-5 pt-2.5">
+              <AppText family="body" weight="semibold" className="text-[12px] leading-[16px] text-secondary">
+                {readiness.reason}
+              </AppText>
+            </View>
+          ) : null}
+          <View
+            className={`flex-row items-center gap-3 bg-white px-5 pb-3 pt-3 ${
+              !readiness.ready && readiness.subtotalPaise !== null ? "" : "border-t border-line"
+            }`}
+          >
+            <View className="min-w-[96px]">
+              {readiness.subtotalPaise !== null ? (
+                <>
+                  <AppText family="body" weight="extrabold" className="text-[17px] leading-[22px] text-ink">
+                    {formatRupees(readiness.subtotalPaise, { fractionDigits: 2 })}
+                  </AppText>
+                  {cart.savingsPaise > 0 ? (
+                    <AppText family="body" weight="bold" className="text-[11px] leading-[14px] text-savings">
+                      {`Saved ${formatRupees(cart.savingsPaise, { fractionDigits: 2 })}`}
+                    </AppText>
+                  ) : (
+                    <AppText family="body" weight="regular" className="text-[11px] leading-[14px] text-muted">
+                      Subtotal
+                    </AppText>
+                  )}
+                </>
+              ) : (
+                <AppText family="body" weight="semibold" className="text-[12px] leading-[16px] text-secondary">
+                  {readiness.code === "confirming" ? "Checking prices" : "Review cart"}
+                </AppText>
+              )}
+            </View>
+            <View className="flex-1">
+              <PrimaryButton
+                label="Proceed to checkout"
+                disabled={!readiness.ready}
+                onPress={() => {
+                  if (readiness.ready) {
+                    router.push("/checkout");
+                  }
+                }}
+              />
+            </View>
           </View>
         </>
       )}
     </ScreenContainer>
+  );
+}
+
+function BillDetails({
+  ready,
+  subtotalPaise,
+  savingsPaise,
+  pendingLabel,
+}: {
+  ready: boolean;
+  subtotalPaise: number | null;
+  savingsPaise: number;
+  pendingLabel: string;
+}) {
+  return (
+    <View className="mt-3 rounded-[18px] border border-line bg-white px-4 py-4">
+      <AppText family="display" weight="bold" className="mb-3 text-[16px] leading-[21px] text-ink">
+        Bill details
+      </AppText>
+      {ready && subtotalPaise !== null ? (
+        <View className="gap-2.5">
+          {savingsPaise > 0 ? (
+            <>
+              <BillRow label="Item total (MRP)" value={formatRupees(subtotalPaise + savingsPaise, { fractionDigits: 2 })} />
+              <BillRow label="Product discount" value={`−${formatRupees(savingsPaise, { fractionDigits: 2 })}`} tone="savings" />
+            </>
+          ) : null}
+          <BillRow label="Subtotal" value={formatRupees(subtotalPaise, { fractionDigits: 2 })} />
+          <BillRow label="Delivery fee" value="At checkout" tone="muted" />
+          <View className="my-0.5 h-px bg-line" />
+          <BillRow label="To pay now" value={formatRupees(subtotalPaise, { fractionDigits: 2 })} strong />
+          <AppText family="body" weight="regular" className="text-[11px] leading-[16px] text-muted">
+            {guestCheckoutCopy.deliveryPending}
+          </AppText>
+          {savingsPaise > 0 ? (
+            <View className="mt-1 items-center rounded-lg bg-savings-wash px-3 py-2">
+              <AppText family="body" weight="bold" className="text-[12px] leading-[16px] text-savings">
+                {`You are saving ${formatRupees(savingsPaise, { fractionDigits: 2 })} on this order`}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <AppText family="body" weight="regular" className="text-[13px] leading-[19px] text-secondary">
+          {pendingLabel}
+        </AppText>
+      )}
+    </View>
+  );
+}
+
+function BillRow({
+  label,
+  value,
+  tone = "ink",
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  tone?: "ink" | "savings" | "muted";
+  strong?: boolean;
+}) {
+  const valueColor = tone === "savings" ? "text-savings" : tone === "muted" ? "text-muted" : "text-ink";
+  return (
+    <View className="flex-row items-center justify-between gap-3">
+      <AppText
+        family="body"
+        weight={strong ? "extrabold" : "regular"}
+        className={`${strong ? "text-[14px] leading-[19px] text-ink" : "text-[13px] leading-[18px] text-secondary"}`}
+      >
+        {label}
+      </AppText>
+      <AppText
+        family="body"
+        weight={strong ? "extrabold" : "semibold"}
+        className={`${strong ? "text-[15px] leading-[20px]" : "text-[13px] leading-[18px]"} ${valueColor}`}
+      >
+        {value}
+      </AppText>
+    </View>
   );
 }
 
@@ -214,6 +306,9 @@ function CartRow({
   const path = line.offer?.deliveryPath ?? line.item.display?.deliveryPath ?? null;
   const presentation = cartLinePresentation(line.item.quantity, line.status);
   const maxQuantity = line.offer?.stock.quantity ?? presentation.stockQuantity ?? undefined;
+  const mrpPaise = line.offer?.mrpPaise ?? null;
+  const percentOff = presentation.unitPricePaise !== null ? discountPercent(presentation.unitPricePaise, mrpPaise) : null;
+  const showMrp = percentOff !== null;
 
   return (
     <View className={last ? "pb-3" : "border-b border-line pb-3 mb-3"}>
@@ -234,7 +329,14 @@ function CartRow({
               ) : null}
             </View>
             {presentation.lineTotalPaise !== null ? (
-              <PriceText paise={presentation.lineTotalPaise} fractionDigits={2} />
+              <View className="items-end">
+                <PriceText paise={presentation.lineTotalPaise} fractionDigits={2} />
+                {showMrp && mrpPaise !== null ? (
+                  <AppText family="body" weight="regular" className="text-[11px] leading-[14px] text-muted line-through">
+                    {formatRupees(mrpPaise * line.item.quantity, { fractionDigits: 2 })}
+                  </AppText>
+                ) : null}
+              </View>
             ) : line.status.kind === "loading" ? (
               <AppText family="body" weight="semibold" className="text-[12px] text-muted">
                 …
@@ -242,9 +344,21 @@ function CartRow({
             ) : null}
           </View>
           {presentation.unitPricePaise !== null ? (
-            <AppText family="body" weight="regular" className="mt-1 text-[11px] text-muted">
-              {`${formatRupees(presentation.unitPricePaise, { fractionDigits: 2 })} each`}
-            </AppText>
+            <View className="mt-1 flex-row flex-wrap items-center gap-x-1.5">
+              <AppText family="body" weight="regular" className="text-[11px] leading-[14px] text-muted">
+                {`${formatRupees(presentation.unitPricePaise, { fractionDigits: 2 })} each`}
+              </AppText>
+              {showMrp && mrpPaise !== null ? (
+                <>
+                  <AppText family="body" weight="regular" className="text-[11px] leading-[14px] text-muted line-through">
+                    {formatRupees(mrpPaise, { fractionDigits: 2 })}
+                  </AppText>
+                  <AppText family="body" weight="bold" className="text-[11px] leading-[14px] text-savings">
+                    {`${percentOff}% off`}
+                  </AppText>
+                </>
+              ) : null}
+            </View>
           ) : null}
           {presentation.stockQuantity !== null && line.status.kind === "over_stock" ? (
             <AppText family="body" weight="regular" className="mt-1 text-[11px] text-secondary">
