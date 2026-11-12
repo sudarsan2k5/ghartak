@@ -92,6 +92,13 @@
       "when": 1793404000000,
       "tag": "0012_remove_sku_barcode_attributes",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793405000000,
+      "tag": "0013_remove_unit_and_pack_size",
+      "breakpoints": true
     }
   ]
 }

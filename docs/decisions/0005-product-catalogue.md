@@ -23,3 +23,5 @@ Migration `0002_product_catalogue` refuses to drop `products.image_url` if any v
 ## Later change
 
 Migration `0012_remove_sku_barcode_attributes` removed `products.sku`, `products.barcode`, `order_items.sku`, and the `product_attributes` table. Products are identified by id only, and the parts of this decision that describe those fields no longer apply.
+
+Migration `0013_remove_unit_and_pack_size` removed `products.unit`, `products.package_size`, and the `product_unit` enum. The package label is the only size information a product carries. Opening stock no longer takes a reason from the admin; its movement is recorded with the reason `Opening stock`.

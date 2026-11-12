@@ -1,6 +1,5 @@
 "use client";
 
-import { productUnitValues } from "@ghartak/contracts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -22,21 +21,13 @@ import { assignableCategories, categoryOptionLabel } from "@/lib/categories/form
 import { createProduct, fetchCategories, fetchProduct, updateProduct, uploadProductImage } from "@/lib/products/requests";
 import { paiseToRupeeInput } from "@/lib/products/money";
 
-const unitLabels: Record<(typeof productUnitValues)[number], string> = {
-  piece: "Piece",
-  kg: "Kilogram",
-  g: "Gram",
-  litre: "Litre",
-  ml: "Millilitre",
-};
-
 export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "create" | "edit"; productId?: string; fixedCategoryId?: string }) {
   const router = useRouter();
   const { client } = useSession();
   const redirect = useAuthRedirect();
   const [draft, setDraft] = useState<ProductDraft>(() =>
     fixedCategoryId
-      ? { ...emptyProductDraft(), categoryId: fixedCategoryId, publicationStatus: "published", openingReason: "Opening stock" }
+      ? { ...emptyProductDraft(), categoryId: fixedCategoryId, publicationStatus: "published" }
       : emptyProductDraft(),
   );
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -96,8 +87,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
       const loaded: LoadedProduct = {
         name: product.name,
         categoryId: product.category.id,
-        unit: product.unit,
-        packageSize: String(product.packageSize),
         packageLabel: product.packageLabel,
         brand: product.brand ?? "",
         description: product.description ?? "",
@@ -248,12 +237,10 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
     );
   }
 
-  const stock = Number(draft.openingStock);
-  const showReason = mode === "create" && Number.isInteger(stock) && stock > 0;
   const archived = original?.publicationStatus === "archived";
 
   return (
-    <form ref={formRef} className="max-w-3xl space-y-6" onSubmit={(event) => void onSubmit(event)} noValidate>
+    <form ref={formRef} className="w-full space-y-6" onSubmit={(event) => void onSubmit(event)} noValidate>
       {fixedCategoryId || original ? (
         <Link href={`/categories/${fixedCategoryId ?? original?.categoryId}`} className="text-sm font-medium text-secondary underline">
           ← {categories.find((category) => category.id === (fixedCategoryId ?? original?.categoryId))?.name ?? "Category"}
@@ -287,19 +274,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
           </select>
         </Field>
         )}
-        <Field id="unit" label="Unit" error={errors["unit"]}>
-          <select id="unit" value={draft.unit} aria-invalid={errors["unit"] !== undefined} aria-describedby={describedBy("unit", errors["unit"])} className={controlClassName} onChange={(event) => update("unit", event.target.value)}>
-            <option value="">Choose a unit</option>
-            {productUnitValues.map((unit) => (
-              <option key={unit} value={unit}>
-                {unitLabels[unit]}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field id="package-size" label="Pack size" error={errors["packageSize"]}>
-          <input id="package-size" inputMode="decimal" value={draft.packageSize} aria-invalid={errors["packageSize"] !== undefined} aria-describedby={describedBy("package-size", errors["packageSize"])} className={controlClassName} onChange={(event) => update("packageSize", event.target.value)} />
-        </Field>
         <Field id="package-label" label="Package label" error={errors["packageLabel"]} hint="Shown to customers, for example 1 kg.">
           <input id="package-label" value={draft.packageLabel} aria-invalid={errors["packageLabel"] !== undefined} aria-describedby={describedBy("package-label", errors["packageLabel"], "Shown to customers, for example 1 kg.")} className={controlClassName} onChange={(event) => update("packageLabel", event.target.value)} />
         </Field>
@@ -314,11 +288,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
             <Field id="opening-stock" label="Opening stock" error={errors["openingStock"]}>
               <input id="opening-stock" inputMode="numeric" value={draft.openingStock} aria-invalid={errors["openingStock"] !== undefined} aria-describedby={describedBy("opening-stock", errors["openingStock"])} className={controlClassName} onChange={(event) => update("openingStock", event.target.value)} />
             </Field>
-            {showReason ? (
-              <Field id="opening-reason" label="Opening stock reason" error={errors["openingReason"]}>
-                <input id="opening-reason" value={draft.openingReason} aria-invalid={errors["openingReason"] !== undefined} aria-describedby={describedBy("opening-reason", errors["openingReason"])} className={controlClassName} onChange={(event) => update("openingReason", event.target.value)} />
-              </Field>
-            ) : null}
           </>
         ) : null}
         <Field id="brand" label="Brand" error={errors["brand"]} hint="Optional.">
@@ -405,8 +374,6 @@ export function ProductEditor({ mode, productId, fixedCategoryId }: { mode: "cre
 function loadedFromProduct(product: {
   name: string;
   category: { id: string };
-  unit: string;
-  packageSize: number;
   packageLabel: string;
   brand: string | null;
   description: string | null;
@@ -416,8 +383,6 @@ function loadedFromProduct(product: {
   return {
     name: product.name,
     categoryId: product.category.id,
-    unit: product.unit,
-    packageSize: String(product.packageSize),
     packageLabel: product.packageLabel,
     brand: product.brand ?? "",
     description: product.description ?? "",

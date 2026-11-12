@@ -144,8 +144,7 @@ export function ProductDetail({ productId }: { productId: string }) {
       <section className="grid gap-4 rounded-2xl border border-line bg-white p-5 shadow-card md:grid-cols-2">
         <Detail label="Category" value={product.category.name} />
         <Detail label="Brand" value={product.brand ?? "—"} />
-        <Detail label="Unit" value={product.unit} />
-        <Detail label="Pack" value={`${product.packageSize} · ${product.packageLabel}`} />
+        <Detail label="Pack" value={product.packageLabel} />
         <Detail label="Price" value={formatPaise(product.inventory.pricePaise)} />
         <div className="md:col-span-2">
           <h2 className="text-sm font-medium text-muted">Description</h2>

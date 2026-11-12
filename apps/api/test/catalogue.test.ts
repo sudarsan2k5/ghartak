@@ -361,8 +361,6 @@ function product(
     name,
     brand,
     description: `${name} description`,
-    unit: "piece" as const,
-    packageSize: 1,
     packageLabel: "1 pc",
     publicationStatus,
     isActive,

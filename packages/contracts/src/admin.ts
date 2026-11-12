@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   paiseSchema,
   productPublicationStatusSchema,
-  productUnitSchema,
   storeProductAvailabilitySchema,
 } from "./marketplace.js";
 
@@ -30,25 +29,15 @@ export const adminProductCreateSchema = z.object({
   brand: z.string().trim().min(1).max(120).nullable().optional(),
   description: z.string().trim().min(1).max(4000).nullable().optional(),
   categoryId: z.uuid(),
-  unit: productUnitSchema,
-  packageSize: z.number().positive(),
   packageLabel: packageLabelSchema,
   publicationStatus: productPublicationStatusSchema.optional(),
   isActive: z.boolean().optional(),
   pricePaise: paiseSchema,
   mrpPaise: paiseSchema.nullable().optional(),
   openingStockQuantity: z.number().int().nonnegative(),
-  openingReason: reasonSchema.optional(),
 }).superRefine((value, ctx) => {
   if (typeof value.mrpPaise === "number" && value.mrpPaise < value.pricePaise) {
     ctx.addIssue({ code: "custom", path: ["mrpPaise"], message: "MRP cannot be below the selling price" });
-  }
-  if (value.openingStockQuantity > 0 && !value.openingReason) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["openingReason"],
-      message: "Opening stock requires a reason",
-    });
   }
 });
 
@@ -58,8 +47,6 @@ export const adminProductUpdateSchema = z
     brand: z.string().trim().min(1).max(120).nullable().optional(),
     description: z.string().trim().min(1).max(4000).nullable().optional(),
     categoryId: z.uuid().optional(),
-    unit: productUnitSchema.optional(),
-    packageSize: z.number().positive().optional(),
     packageLabel: packageLabelSchema.optional(),
     publicationStatus: productPublicationStatusSchema.optional(),
     isActive: z.boolean().optional(),
@@ -196,7 +183,6 @@ export const adminProductSummarySchema = z.object({
     name: z.string(),
     slug: z.string(),
   }),
-  unit: productUnitSchema,
   packageLabel: z.string(),
   publicationStatus: productPublicationStatusSchema,
   isActive: z.boolean(),
@@ -206,7 +192,6 @@ export const adminProductSummarySchema = z.object({
 
 export const adminProductSchema = adminProductSummarySchema.extend({
   description: z.string().nullable(),
-  packageSize: z.number().positive(),
   images: z.array(adminImageSchema),
 });
 

@@ -264,7 +264,6 @@ function sampleProduct(input: {
     name: input.name ?? "Toor Dal",
     brand: null,
     category: { id: categoryId, name: "Staples", slug: "staples" },
-    unit: "kg",
     packageLabel: "1 kg",
     publicationStatus: "published",
     isActive: true,

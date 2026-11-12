@@ -13,7 +13,6 @@ import {
   orderStatusValues,
   paymentMethodValues,
   paymentStatusValues,
-  productUnitValues,
   serviceZoneKindValues,
   storeProductAvailabilityValues,
   storeStatusValues,
@@ -54,7 +53,6 @@ import {
   payments,
   productImages,
   productPublicationStatusEnum,
-  productUnitEnum,
   products,
   serviceZoneKindEnum,
   storeProductAvailabilityEnum,
@@ -132,7 +130,6 @@ async function main(): Promise<void> {
       assertSameValues(addressTypeEnum.enumValues, addressTypeValues);
       assertSameValues(serviceZoneKindEnum.enumValues, serviceZoneKindValues);
       assertSameValues(storeStatusEnum.enumValues, storeStatusValues);
-      assertSameValues(productUnitEnum.enumValues, productUnitValues);
       assertSameValues(productPublicationStatusEnum.enumValues, productPublicationStatusValues);
       assertSameValues(imageStorageProviderEnum.enumValues, imageStorageProviderValues);
       assertSameValues(imageCleanupOperationEnum.enumValues, imageCleanupOperationValues);
@@ -534,8 +531,6 @@ async function main(): Promise<void> {
           id: productId,
           categoryId: seedIds.staples,
           name: "Temporary Product",
-          unit: "piece",
-          packageSize: 1,
           packageLabel: "1 pc",
           publicationStatus: "draft",
         });

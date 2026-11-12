@@ -68,8 +68,6 @@ function toSummary(product: CatalogueProductRow, primaryImage: CatalogueImage | 
       name: product.categoryName,
       slug: product.categorySlug,
     },
-    unit: product.unit,
-    packageSize: product.packageSize,
     packageLabel: product.packageLabel,
     pricePaise: product.pricePaise,
     mrpPaise: product.mrpPaise !== null && product.mrpPaise > product.pricePaise ? product.mrpPaise : null,

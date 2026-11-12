@@ -22,8 +22,6 @@ type ProductDetail = {
   brand: string | null;
   description: string | null;
   category: { id: string; name: string; slug: string };
-  unit: "piece" | "kg" | "g" | "litre" | "ml";
-  packageSize: number;
   packageLabel: string;
   publicationStatus: "draft" | "published" | "archived";
   isActive: boolean;
@@ -62,7 +60,6 @@ export function createAdminProductService(db: Database) {
           categoryId: categories.id,
           categoryName: categories.name,
           categorySlug: categories.slug,
-          unit: products.unit,
           packageLabel: products.packageLabel,
           publicationStatus: products.publicationStatus,
           isActive: products.isActive,
@@ -103,7 +100,6 @@ export function createAdminProductService(db: Database) {
           name: row.name,
           brand: row.brand,
           category: { id: row.categoryId, name: row.categoryName, slug: row.categorySlug },
-          unit: row.unit,
           packageLabel: row.packageLabel,
           publicationStatus: row.publicationStatus,
           isActive: row.isActive,
@@ -138,8 +134,6 @@ export function createAdminProductService(db: Database) {
               name: input.name,
               brand: input.brand ?? null,
               description: input.description ?? null,
-              unit: input.unit,
-              packageSize: input.packageSize,
               packageLabel: input.packageLabel,
               publicationStatus: input.publicationStatus ?? "draft",
               isActive: input.isActive ?? true,
@@ -168,7 +162,7 @@ export function createAdminProductService(db: Database) {
               movementType: "addition",
               quantityDelta: input.openingStockQuantity,
               stockAfter: input.openingStockQuantity,
-              reason: input.openingReason ?? null,
+              reason: "Opening stock",
               actorUserId,
             });
           }
@@ -193,8 +187,6 @@ export function createAdminProductService(db: Database) {
               brand: input.brand === undefined ? existing.brand : input.brand,
               description: input.description === undefined ? existing.description : input.description,
               categoryId: input.categoryId ?? existing.category.id,
-              unit: input.unit ?? existing.unit,
-              packageSize: input.packageSize ?? existing.packageSize,
               packageLabel: input.packageLabel ?? existing.packageLabel,
               publicationStatus: input.publicationStatus ?? existing.publicationStatus,
               isActive: input.isActive ?? existing.isActive,
@@ -247,8 +239,6 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
       categoryId: categories.id,
       categoryName: categories.name,
       categorySlug: categories.slug,
-      unit: products.unit,
-      packageSize: products.packageSize,
       packageLabel: products.packageLabel,
       publicationStatus: products.publicationStatus,
       isActive: products.isActive,
@@ -272,8 +262,6 @@ async function findProduct(db: Database | DatabaseTransaction, productId: string
     brand: row.brand,
     description: row.description,
     category: { id: row.categoryId, name: row.categoryName, slug: row.categorySlug },
-    unit: row.unit,
-    packageSize: Number(row.packageSize),
     packageLabel: row.packageLabel,
     publicationStatus: row.publicationStatus,
     isActive: row.isActive,

@@ -292,13 +292,10 @@ describe("admin catalogue", () => {
       brand: "Ghartak",
       description: "Split peas for the admin test",
       categoryId: category.id,
-      unit: "kg",
-      packageSize: 1,
       packageLabel: "1 kg",
       publicationStatus: "published",
       pricePaise: 9900,
       openingStockQuantity: 4,
-      openingReason: "Opening count",
     });
     assert.equal(created.statusCode, 200, created.body);
     const product = created.json() as { id: string; publicationStatus: string; inventory: { stockQuantity: number } };
@@ -336,8 +333,6 @@ describe("admin catalogue", () => {
     await send(app, token, "POST", "/api/v1/admin/products", {
       name: `Shelf Item ${suffix}`,
       categoryId: category.id,
-      unit: "piece",
-      packageSize: 1,
       packageLabel: "1 pc",
       pricePaise: 100,
       openingStockQuantity: 0,
@@ -363,12 +358,9 @@ describe("admin catalogue", () => {
     const created = await send(app, token, "POST", "/api/v1/admin/products", {
       name: `Stock Item ${suffix}`,
       categoryId: category.id,
-      unit: "kg",
-      packageSize: 1,
       packageLabel: "1 kg",
       pricePaise: 5000,
       openingStockQuantity: 5,
-      openingReason: "Opening count",
     });
     const productId = (created.json() as { id: string }).id;
     const priced = await send(app, token, "PATCH", `/api/v1/admin/products/${productId}/price`, { pricePaise: 6400 });

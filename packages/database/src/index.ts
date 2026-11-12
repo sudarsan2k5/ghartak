@@ -41,7 +41,6 @@ export {
   imageStorageProviderEnum,
   productImages,
   productPublicationStatusEnum,
-  productUnitEnum,
   products,
   serviceZoneKindEnum,
   serviceZones,

@@ -1,7 +1,6 @@
 import {
   adminProductCreateSchema,
   adminProductUpdateSchema,
-  productUnitValues,
   type AdminProductCreate,
   type AdminProductUpdate,
 } from "@ghartak/contracts";
@@ -10,13 +9,10 @@ import { rupeesToPaise } from "./money";
 export type ProductDraft = {
   name: string;
   categoryId: string;
-  unit: string;
-  packageSize: string;
   packageLabel: string;
   priceRupees: string;
   mrpRupees: string;
   openingStock: string;
-  openingReason: string;
   brand: string;
   description: string;
   publicationStatus: "draft" | "published" | "archived";
@@ -28,8 +24,6 @@ export type FieldErrors = Record<string, string>;
 export type LoadedProduct = {
   name: string;
   categoryId: string;
-  unit: string;
-  packageSize: string;
   packageLabel: string;
   brand: string;
   description: string;
@@ -37,19 +31,15 @@ export type LoadedProduct = {
   isActive: boolean;
 };
 
-const units = new Set<string>(productUnitValues);
 
 export function emptyProductDraft(): ProductDraft {
   return {
     name: "",
     categoryId: "",
-    unit: "",
-    packageSize: "",
     packageLabel: "",
     priceRupees: "",
     mrpRupees: "",
     openingStock: "0",
-    openingReason: "",
     brand: "",
     description: "",
     publicationStatus: "draft",
@@ -73,18 +63,9 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
   if (!stock.ok) {
     errors["openingStock"] = stock.message;
   }
-  const packageSize = parsePackageSize(input.packageSize);
-  if (!packageSize.ok) {
-    errors["packageSize"] = packageSize.message;
-  }
-  if (!units.has(input.unit)) {
-    errors["unit"] = "Choose a unit.";
-  }
   const candidate = {
     name: input.name,
     categoryId: input.categoryId,
-    unit: input.unit,
-    packageSize: packageSize.ok ? packageSize.value : 1,
     packageLabel: input.packageLabel,
     pricePaise: price.ok ? price.paise : 0,
     openingStockQuantity: stock.ok ? stock.value : 0,
@@ -92,7 +73,6 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
     ...(input.publicationStatus === "published" ? { publicationStatus: "published" as const } : {}),
     ...(input.brand.trim() ? { brand: input.brand } : {}),
     ...(input.description.trim() ? { description: input.description } : {}),
-    ...(stock.ok && stock.value > 0 ? { openingReason: input.openingReason } : {}),
   };
   const parsed = adminProductCreateSchema.safeParse(candidate);
   if (!parsed.success) {
@@ -102,7 +82,7 @@ export function validateCreate(input: ProductDraft): { ok: true; payload: AdminP
       }
     }
   }
-  if (!price.ok || !stock.ok || !packageSize.ok || !parsed.success || Object.keys(errors).length > 0) {
+  if (!price.ok || !stock.ok || !parsed.success || Object.keys(errors).length > 0) {
     return { ok: false, errors };
   }
   return { ok: true, payload: parsed.data };
@@ -112,23 +92,9 @@ export function validateUpdate(
   original: LoadedProduct,
   input: ProductDraft,
 ): { ok: true; payload: AdminProductUpdate | null } | { ok: false; errors: FieldErrors } {
-  const errors: FieldErrors = {};
-  const packageSize = parsePackageSize(input.packageSize);
-  if (!packageSize.ok) {
-    errors["packageSize"] = packageSize.message;
-  }
-  if (!units.has(input.unit)) {
-    errors["unit"] = "Choose a unit.";
-  }
-  if (Object.keys(errors).length > 0 || !packageSize.ok) {
-    return { ok: false, errors };
-  }
-
   const next: LoadedProduct = {
     name: input.name.trim(),
     categoryId: input.categoryId,
-    unit: input.unit,
-    packageSize: String(packageSize.value),
     packageLabel: input.packageLabel.trim(),
     brand: input.brand.trim(),
     description: input.description.trim(),
@@ -141,12 +107,6 @@ export function validateUpdate(
   }
   if (next.categoryId !== original.categoryId) {
     payload["categoryId"] = next.categoryId;
-  }
-  if (next.unit !== original.unit) {
-    payload["unit"] = next.unit;
-  }
-  if (next.packageSize !== original.packageSize) {
-    payload["packageSize"] = packageSize.value;
   }
   if (next.packageLabel !== original.packageLabel) {
     payload["packageLabel"] = next.packageLabel;
@@ -186,14 +146,6 @@ function parseStock(input: string): { ok: true; value: number } | { ok: false; m
     return { ok: false, message: "That stock quantity is too large." };
   }
   return { ok: true, value };
-}
-
-function parsePackageSize(input: string): { ok: true; value: number } | { ok: false; message: string } {
-  const trimmed = input.trim();
-  if (!/^\d+(?:\.\d+)?$/.test(trimmed) || Number(trimmed) <= 0) {
-    return { ok: false, message: "Enter a pack size greater than zero." };
-  }
-  return { ok: true, value: Number(trimmed) };
 }
 
 export function errorSummary(errors: FieldErrors): string {
@@ -236,9 +188,6 @@ function friendlyMessage(path: string, fallback: string): string {
   }
   if (path === "packageLabel") {
     return "Enter the package label customers will see.";
-  }
-  if (path === "openingReason") {
-    return "Opening stock requires a reason.";
   }
   if (path === "brand") {
     return "Enter a brand, or leave it empty.";

@@ -80,8 +80,6 @@ The seeded catalogue, sorted by name:
         "name": "Dairy",
         "slug": "dairy"
       },
-      "unit": "litre",
-      "packageSize": 1,
       "packageLabel": "1 L",
       "pricePaise": 5600,
       "stock": {
@@ -125,8 +123,6 @@ The seeded catalogue, sorted by name:
     "name": "Staples",
     "slug": "staples"
   },
-  "unit": "kg",
-  "packageSize": 1,
   "packageLabel": "1 kg",
   "pricePaise": 12000,
   "stock": {

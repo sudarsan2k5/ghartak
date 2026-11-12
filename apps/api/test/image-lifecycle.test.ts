@@ -541,8 +541,6 @@ async function insertFixture(database: Database) {
     id: productIdValue,
     categoryId: category.id,
     name: `Lifecycle ${suffix}`,
-    unit: "piece",
-    packageSize: 1,
     packageLabel: "1 pc",
     publicationStatus: "published",
     isActive: true,

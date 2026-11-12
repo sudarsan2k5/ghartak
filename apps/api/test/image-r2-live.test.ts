@@ -110,13 +110,10 @@ describe("controlled live R2 image cycle", () => {
       payload: {
         name: `R2 Live ${suffix}`,
         categoryId: (category.json() as { id: string }).id,
-        unit: "piece",
-        packageSize: 1,
         packageLabel: "1 pc",
         publicationStatus: "published",
         pricePaise: 100,
         openingStockQuantity: 1,
-        openingReason: "Opening count",
       },
     });
     assert.equal(product.statusCode, 200, product.body);

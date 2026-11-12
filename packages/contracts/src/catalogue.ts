@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { paiseSchema, productUnitSchema } from "./marketplace.js";
+import { paiseSchema } from "./marketplace.js";
 
 export const catalogueProductSortValues = ["name", "price_asc", "price_desc", "newest"] as const;
 export const customerAvailabilityValues = ["available", "out_of_stock"] as const;
@@ -37,8 +37,6 @@ export const catalogueProductSummarySchema = z.object({
   brand: z.string().nullable(),
   descriptionSummary: z.string().max(descriptionSummaryLength).nullable(),
   category: catalogueCategorySchema,
-  unit: productUnitSchema,
-  packageSize: z.number().positive(),
   packageLabel: z.string(),
   pricePaise: paiseSchema,
   mrpPaise: paiseSchema.nullable().default(null),

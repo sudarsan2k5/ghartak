@@ -22,8 +22,6 @@ export type CatalogueProductRow = {
   name: string;
   brand: string | null;
   description: string | null;
-  unit: "piece" | "kg" | "g" | "litre" | "ml";
-  packageSize: number;
   packageLabel: string;
   categoryId: string;
   categoryName: string;
@@ -185,8 +183,6 @@ function productSelection() {
     name: products.name,
     brand: products.brand,
     description: products.description,
-    unit: products.unit,
-    packageSize: products.packageSize,
     packageLabel: products.packageLabel,
     categoryId: categories.id,
     categoryName: categories.name,
@@ -223,8 +219,6 @@ function normalizeProduct(row: {
   name: string;
   brand: string | null;
   description: string | null;
-  unit: CatalogueProductRow["unit"];
-  packageSize: number;
   packageLabel: string;
   categoryId: string;
   categoryName: string;
@@ -236,7 +230,6 @@ function normalizeProduct(row: {
 }): CatalogueProductRow {
   return {
     ...row,
-    packageSize: numberValue(row.packageSize),
     pricePaise: numberValue(row.pricePaise),
     mrpPaise: row.mrpPaise === null ? null : numberValue(row.mrpPaise),
     stockQuantity: numberValue(row.stockQuantity),

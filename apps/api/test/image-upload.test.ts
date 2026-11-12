@@ -121,13 +121,10 @@ describe("admin image upload http", () => {
       payload: {
         name: `Upload ${suffix}`,
         categoryId: (category.json() as { id: string }).id,
-        unit: "piece",
-        packageSize: 1,
         packageLabel: "1 pc",
         publicationStatus: "published",
         pricePaise: 100,
         openingStockQuantity: 1,
-        openingReason: "Opening count",
       },
     });
     assert.equal(created.statusCode, 200, created.body);

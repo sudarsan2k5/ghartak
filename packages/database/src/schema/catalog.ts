@@ -24,7 +24,6 @@ import {
 import {
   imageStorageProviderEnum,
   productPublicationStatusEnum,
-  productUnitEnum,
   serviceZoneKindEnum,
   storeProductAvailabilityEnum,
   storeStatusEnum,
@@ -137,8 +136,6 @@ export const products = pgTable(
     name: text("name").notNull(),
     brand: text("brand"),
     description: text("description"),
-    unit: productUnitEnum("unit").notNull(),
-    packageSize: numeric("package_size", { precision: 10, scale: 3, mode: "number" }).notNull(),
     packageLabel: text("package_label").notNull(),
     publicationStatus: productPublicationStatusEnum("publication_status").notNull().default("published"),
     isActive: boolean("is_active").notNull().default(true),
@@ -148,7 +145,6 @@ export const products = pgTable(
   (table) => [
     check("products_name_length", sql`char_length(${table.name}) between 1 and 160`),
     check("products_brand_length", sql`${table.brand} is null or char_length(${table.brand}) between 1 and 120`),
-    check("products_package_size_positive", sql`${table.packageSize} > 0`),
     check("products_package_label_length", sql`char_length(${table.packageLabel}) between 1 and 80`),
     index("products_category_id_idx").on(table.categoryId),
     index("products_publication_status_idx").on(table.publicationStatus),

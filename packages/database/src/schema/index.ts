@@ -11,7 +11,6 @@ export {
   imageCleanupStatusEnum,
   imageStorageProviderEnum,
   productPublicationStatusEnum,
-  productUnitEnum,
   serviceZoneKindEnum,
   storeProductAvailabilityEnum,
   storeStatusEnum,

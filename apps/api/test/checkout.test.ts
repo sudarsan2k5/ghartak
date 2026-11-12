@@ -535,8 +535,6 @@ function product(
     id,
     categoryId,
     name,
-    unit: "piece" as const,
-    packageSize: 1,
     packageLabel: "1 pc",
     publicationStatus,
     isActive,

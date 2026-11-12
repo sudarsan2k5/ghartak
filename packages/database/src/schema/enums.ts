@@ -5,7 +5,6 @@ export const accountStatusEnum = pgEnum("account_status", ["active", "suspended"
 export const addressTypeEnum = pgEnum("address_type", ["home", "work", "other"]);
 export const serviceZoneKindEnum = pgEnum("service_zone_kind", ["village", "town", "city"]);
 export const storeStatusEnum = pgEnum("store_status", ["active", "inactive", "suspended"]);
-export const productUnitEnum = pgEnum("product_unit", ["piece", "kg", "g", "litre", "ml"]);
 export const productPublicationStatusEnum = pgEnum("product_publication_status", [
   "draft",
   "published",

@@ -190,12 +190,9 @@ describe("daily tiles and category images", () => {
         payload: {
           name,
           categoryId,
-          unit: "kg",
-          packageSize: 1,
           packageLabel: "1 kg",
           pricePaise: 8000,
           openingStockQuantity: 5,
-          openingReason: "Opening stock",
           ...extra,
         },
       });

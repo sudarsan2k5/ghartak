@@ -398,8 +398,6 @@ function catalogue() {
     brand: "Ghartak Staples",
     descriptionSummary: null,
     category: { id: "10000000-0000-4000-8000-000000000021", name: "Staples", slug: "staples" },
-    unit: "kg" as const,
-    packageSize: 1,
     packageLabel: "1 kg",
     pricePaise: 12000,
     stock: { quantity: 40, availability: "available" as const, purchasable: true },

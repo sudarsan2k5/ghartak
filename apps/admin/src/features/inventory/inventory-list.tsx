@@ -186,7 +186,6 @@ function InventoryTable({
               <th className="px-4 py-3 font-medium">Product</th>
               <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Stock</th>
-              <th className="px-4 py-3 font-medium">Unit</th>
               <th className="px-4 py-3 font-medium">Availability</th>
               <th className="px-4 py-3 font-medium">Action</th>
             </tr>
@@ -200,7 +199,6 @@ function InventoryTable({
                 </td>
                 <td className="px-4 py-3">{product.category.name}</td>
                 <td className="px-4 py-3">{formatCount(product.inventory.stockQuantity)}</td>
-                <td className="px-4 py-3">{product.unit}</td>
                 <td className="px-4 py-3">
                   <StatusBadge value={product.inventory.availability} />
                 </td>
@@ -233,9 +231,9 @@ function InventoryTable({
                 <dd>{formatCount(product.inventory.stockQuantity)}</dd>
               </div>
               <div>
-                <dt className="text-muted">Unit</dt>
+                <dt className="text-muted">Pack</dt>
                 <dd>
-                  {product.unit} · {product.packageLabel}
+                  {product.packageLabel}
                 </dd>
               </div>
               <div>

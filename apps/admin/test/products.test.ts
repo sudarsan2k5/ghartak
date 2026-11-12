@@ -89,18 +89,15 @@ describe("product mutations", () => {
     const missing = validateCreate({ ...emptyProductDraft(), openingStock: "4" });
     assert.equal(missing.ok, false);
     if (!missing.ok) {
-      assert.equal(missing.errors["openingReason"], "Opening stock requires a reason.");
+      assert.equal(missing.errors["name"], "Enter a product name.");
     }
     const ready = validateCreate({
       ...emptyProductDraft(),
       name: "Jaggery",
       categoryId,
-      unit: "kg",
-      packageSize: "1",
       packageLabel: "1 kg",
       priceRupees: "56.50",
       openingStock: "4",
-      openingReason: "Opening count",
     });
     assert.equal(ready.ok, true);
     if (ready.ok) {
@@ -291,7 +288,6 @@ function summary() {
   return {
     ...detail(),
     description: undefined,
-    packageSize: undefined,
     images: undefined,
   };
 }
@@ -303,8 +299,6 @@ function detail() {
     brand: "Ghartak",
     description: "Split pigeon peas",
     category: { id: categoryId, name: "Staples", slug: "staples" },
-    unit: "kg",
-    packageSize: 1,
     packageLabel: "1 kg",
     publicationStatus: "published",
     isActive: true,
@@ -325,8 +319,6 @@ function loaded(): LoadedProduct {
   return {
     name: "Toor Dal",
     categoryId,
-    unit: "kg",
-    packageSize: "1",
     packageLabel: "1 kg",
     brand: "Ghartak",
     description: "Split pigeon peas",
@@ -355,15 +347,24 @@ describe("product form save feedback", () => {
   });
 
   it("counts several problems in the summary", () => {
-    assert.equal(errorSummary({ name: "a", unit: "b" }), "Product not saved. Fix the 2 problems marked in red.");
+    assert.equal(errorSummary({ name: "a", packageLabel: "b" }), "Product not saved. Fix the 2 problems marked in red.");
   });
 });
 
 describe("add product form", () => {
-  const ready = { ...emptyProductDraft(), name: "Face wash", categoryId, unit: "piece", packageSize: "1", packageLabel: "1 piece", priceRupees: "100" };
+  const ready = { ...emptyProductDraft(), name: "Face wash", categoryId, packageLabel: "1 piece", priceRupees: "100" };
 
   it("accepts a product with only the required fields", () => {
     assert.equal(validateCreate(ready).ok, true);
+  });
+
+  it("saves opening stock without asking for a reason", () => {
+    const result = validateCreate({ ...ready, openingStock: "12" });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.payload.openingStockQuantity, 12);
+      assert.equal("openingReason" in result.payload, false);
+    }
   });
 });
 
