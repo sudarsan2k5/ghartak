@@ -96,25 +96,6 @@ export function ProductRailSkeleton({ width, count = 3 }: { width: number; count
   );
 }
 
-/** A grid of category tiles for the All categories screen. */
-export function CategoryGridSkeleton({ tileWidth, count = 8 }: { tileWidth: number; count?: number }) {
-  return (
-    <View
-      className="flex-row flex-wrap"
-      style={{ paddingHorizontal: 15, rowGap: 16 }}
-      accessibilityLabel="Loading categories"
-      accessibilityRole="progressbar"
-    >
-      {Array.from({ length: count }, (_, index) => (
-        <View key={index} style={{ width: tileWidth }} className="items-center px-[5px]">
-          <SkeletonBlock width="100%" height={65} radius={12} />
-          <SkeletonBlock width="70%" height={10} style={{ marginTop: 6 }} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
 /** Four category tiles, matching the home row. */
 export function CategoryRowSkeleton() {
   return (

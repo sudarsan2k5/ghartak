@@ -1,3 +1,5 @@
+import { washes } from "./tints";
+
 export const colors = {
   page: "#FCFBF8",
   ink: "#35203C",
@@ -8,6 +10,7 @@ export const colors = {
   secondary: "#665D6C",
   savings: "#527527",
   savingsWash: "#EEF6DC",
+  ...washes,
 } as const;
 
 export const space = {
